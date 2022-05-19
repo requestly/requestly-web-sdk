@@ -1,0 +1,49 @@
+{
+  "name": "@requestly/web-sdk",
+  "version": "0.1.0",
+  "description": "Requestly Web SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files":[
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && rollup -c",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "prepare": "husky install",
+    "type-check": "tsc --noEmit --pretty",
+    "precommit": "npm run type-check && npm run lint:fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/requestly/requestly-web-sdk.git"
+  },
+  "author": {
+    "name": "Requestly",
+    "email": "contact@requestly.io",
+    "url": "https://requestly.io/"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/requestly/requestly-web-sdk/issues"
+  },
+  "homepage": "https://github.com/requestly/requestly-web-sdk#readme",
+  "devDependencies": {
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@rollup/plugin-typescript": "^8.3.2",
+    "@typescript-eslint/eslint-plugin": "^5.25.0",
+    "@typescript-eslint/parser": "^5.25.0",
+    "eslint": "^8.15.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^8.0.1",
+    "prettier": "^2.6.2",
+    "rollup": "^2.73.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "tslib": "^2.4.0",
+    "typescript": "^4.6.4"
+  }
+}
