@@ -4,12 +4,8 @@
 
 #### Add to website as `<script>` tag
 
-Add Requestly SDK in `<head>` as sooner as possible.
 ```html
-<head>
-    <script src="https://unpkg.com/@requestly/web-sdk/dist/requestly-web-sdk.min.js" crossorigin></script>
-    <!-- Rest HTML -->
-</head>
+<script src="https://unpkg.com/@requestly/web-sdk/dist/requestly-web-sdk.min.js" crossorigin></script>
 ```
 
 ### Add as NPM dependency
@@ -31,11 +27,14 @@ import * as Requestly from '@requestly/web-sdk';
 
 ## Getting Started
 
+### Record a session
+
 ```javascript
-// Create Requestly Session
+// Instantiate Requestly Session Recorder
 const sessionRecorder = new Requestly.SessionRecorder({
-  video: true,
-  networkRequests: true
+  video: true, // record video
+  networkRequests: true, // record network requests
+  consoleLogs: true // record browser console logs
 });
 
 // Start sessionRecorder
@@ -46,4 +45,28 @@ sessionRecorder.stop();
 
 // Get sessionRecorder data
 const data = sessionRecorder.getData();
+```
+
+### Mock API response payload
+
+```javascript
+// Return static custom response for specified URL pattern
+Requestly.Network.mockResponsePayload(urlPattern, { myField: 'staticCustomValue' });
+
+// Evaluate and return custom response for specified URL pattern
+Requestly.Network.mockResponsePayload(urlPattern, (args) => {
+  const {method, url, response, responseType, requestHeaders, requestData, responseJSON} = args;
+  
+  // evaluate response from properties received in args
+  return { myField: 'evaluatedCustomValue' };
+});
+
+// Clear response mock for specified URL pattern
+Requestly.Network.unmockResponsePayload(urlPattern);
+
+// Temporarily disable mocking of API response
+Requestly.Network.disableMocks();
+
+// Enable back mocking of API response
+Requestly.Network.enableMocks();
 ```

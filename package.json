@@ -13,7 +13,8 @@
     "lint:fix": "eslint --fix src",
     "prepare": "husky install",
     "type-check": "tsc --noEmit --pretty",
-    "precommit": "npm run type-check && npm run lint:fix"
+    "precommit": "npm run type-check && npm run lint:fix",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
