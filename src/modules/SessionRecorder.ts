@@ -8,7 +8,7 @@ export interface SessionData {
   stopTime: number;
 }
 
-export class Session {
+export class SessionRecorder {
   #options: SessionOptions;
   #startTime: number;
   #stopTime: number;

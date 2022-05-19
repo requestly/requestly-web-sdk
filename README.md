@@ -7,7 +7,7 @@
 Add Requestly SDK in `<head>` as sooner as possible.
 ```html
 <head>
-    <script src="https://unpkg.com/@requestly/web-sdk@0.1.0/dist/requestly-web-sdk.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@requestly/web-sdk/dist/requestly-web-sdk.min.js" crossorigin></script>
     <!-- Rest HTML -->
 </head>
 ```
@@ -24,21 +24,26 @@ npm install @requestly/web-sdk --save
 yarn add @requestly/web-sdk
 ```
 
+Import in project as ES module:
+```javascript
+import * as Requestly from '@requestly/web-sdk';
+```
+
 ## Getting Started
 
 ```javascript
 // Create Requestly Session
-const session = new Requestly.Session({
+const sessionRecorder = new Requestly.SessionRecorder({
   video: true,
   networkRequests: true
 });
 
-// Start session
-session.start();
+// Start sessionRecorder
+sessionRecorder.start();
 
-// Stop session
-session.stop();
+// Stop sessionRecorder
+sessionRecorder.stop();
 
-// Get session data
-const sessionData = session.getData();
+// Get sessionRecorder data
+const data = sessionRecorder.getData();
 ```
