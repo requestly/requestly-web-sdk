@@ -3,7 +3,7 @@ import { eventWithTime } from 'rrweb/typings/types';
 export interface RQSessionAttributes {
   url: string;
   startTime?: number;
-  stopTime?: number;
+  duration?: number;
 }
 
 export interface RQSessionEvents {

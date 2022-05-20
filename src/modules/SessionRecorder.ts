@@ -40,10 +40,14 @@ export class SessionRecorder {
 
   stop(): void {
     this.#stopVideoRecording?.();
-    this.#session.attributes.stopTime = Date.now();
+    this.#session.attributes.duration = Date.now() - this.#session.attributes.startTime;
   }
 
   getSession(): RQSession {
-    return this.#session;
+    let { attributes } = this.#session;
+    if (!attributes.duration) {
+      attributes = { ...attributes, duration: Date.now() - attributes.startTime };
+    }
+    return { attributes, events: this.#session.events };
   }
 }
