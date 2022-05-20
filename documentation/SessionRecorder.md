@@ -14,6 +14,6 @@ sessionRecorder.start();
 // Stop sessionRecorder
 sessionRecorder.stop();
 
-// Get sessionRecorder data
-const data = sessionRecorder.getData();
+// Get session data from sessionRecorder
+const data = sessionRecorder.getSession();
 ```

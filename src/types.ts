@@ -1,10 +1,16 @@
 import { eventWithTime } from 'rrweb/typings/types';
 
-export interface RequestlySession {
+export interface RQSessionAttributes {
   url: string;
   startTime?: number;
   stopTime?: number;
-  events: {
-    video?: eventWithTime[];
-  };
+}
+
+export interface RQSessionEvents {
+  video?: eventWithTime[];
+}
+
+export interface RQSession {
+  attributes: RQSessionAttributes;
+  events: RQSessionEvents;
 }

@@ -1,5 +1,5 @@
 import { record as recordVideo } from 'rrweb';
-import { RequestlySession } from '../types';
+import { RQSession } from '../types';
 
 export interface SessionRecorderOptions {
   video?: boolean;
@@ -8,7 +8,7 @@ export interface SessionRecorderOptions {
 
 export class SessionRecorder {
   #options: SessionRecorderOptions;
-  #session: RequestlySession;
+  #session: RQSession;
   #stopVideoRecording: () => void;
 
   constructor(options: SessionRecorderOptions) {
@@ -18,7 +18,9 @@ export class SessionRecorder {
     };
 
     this.#session = {
-      url: window.location.href,
+      attributes: {
+        url: window.location.href,
+      },
       events: {},
     };
   }
@@ -33,15 +35,15 @@ export class SessionRecorder {
         },
       });
     }
-    this.#session.startTime = Date.now();
+    this.#session.attributes.startTime = Date.now();
   }
 
   stop(): void {
     this.#stopVideoRecording?.();
-    this.#session.stopTime = Date.now();
+    this.#session.attributes.stopTime = Date.now();
   }
 
-  getData(): RequestlySession {
+  getSession(): RQSession {
     return this.#session;
   }
 }
