@@ -1,24 +1,17 @@
 import { record as recordVideo } from 'rrweb';
-import { eventWithTime } from 'rrweb/typings/types';
+import { RequestlySession } from '../types';
 
-export interface SessionOptions {
+export interface SessionRecorderOptions {
   video?: boolean;
   networkRequests?: boolean;
 }
 
-export interface SessionData {
-  url: string;
-  startTime?: number;
-  stopTime?: number;
-  videoEvents?: eventWithTime[];
-}
-
 export class SessionRecorder {
-  #options: SessionOptions;
-  #session: SessionData;
+  #options: SessionRecorderOptions;
+  #session: RequestlySession;
   #stopVideoRecording: () => void;
 
-  constructor(options: SessionOptions) {
+  constructor(options: SessionRecorderOptions) {
     this.#options = options || {
       video: true,
       networkRequests: true,
@@ -26,16 +19,17 @@ export class SessionRecorder {
 
     this.#session = {
       url: window.location.href,
+      events: {},
     };
   }
 
   start(): void {
     if (this.#options.video) {
-      this.#session.videoEvents = [];
+      this.#session.events.video = [];
 
       this.#stopVideoRecording = recordVideo({
         emit: (event) => {
-          this.#session.videoEvents.push(event);
+          this.#session.events.video.push(event);
         },
       });
     }
@@ -47,7 +41,7 @@ export class SessionRecorder {
     this.#session.stopTime = Date.now();
   }
 
-  getData(): SessionData {
+  getData(): RequestlySession {
     return this.#session;
   }
 }
