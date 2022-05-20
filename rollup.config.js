@@ -1,6 +1,8 @@
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
 import { terser } from 'rollup-plugin-terser';
+import bundleSize from 'rollup-plugin-bundle-size';
 import fs from 'fs';
 import { version } from './package.json';
 
@@ -17,11 +19,13 @@ export default [
       banner,
     },
     plugins: [
+      nodeResolve(),
       typescript(),
       replace({
         preventAssignment: true,
         __VERSION__: version,
       }),
+      bundleSize(),
     ],
   },
   {
@@ -33,6 +37,7 @@ export default [
       banner,
     },
     plugins: [
+      nodeResolve(),
       typescript(),
       terser({
         format: {
@@ -48,6 +53,7 @@ export default [
         preventAssignment: true,
         __VERSION__: version,
       }),
+      bundleSize(),
     ],
   },
   {
@@ -57,6 +63,7 @@ export default [
       banner,
     },
     plugins: [
+      nodeResolve(),
       typescript({
         declaration: true,
         declarationDir: 'dist',
