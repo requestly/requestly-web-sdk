@@ -1,17 +1,22 @@
 import { record as recordVideo } from 'rrweb';
-import { eventWithTime } from 'rrweb/typings/types';
-import { RQSession, RQSessionAttributes } from '../types';
+import { RQSession, RQSessionEvents } from '../types';
 
 export interface SessionRecorderOptions {
   maxDuration?: number;
   video?: boolean;
 }
 
+interface TransientSession {
+  startTime: number;
+  events: RQSessionEvents;
+}
+
 export class SessionRecorder {
   #options: SessionRecorderOptions;
   #stopVideoRecording: () => void;
-  #sessionAttributes: RQSessionAttributes;
-  #videoEventsMatrix: [eventWithTime[], eventWithTime[]] = [[], []];
+  #url: string;
+  #stopTime: number;
+  #transientSessions: [TransientSession, TransientSession];
 
   constructor(options: SessionRecorderOptions) {
     this.#options = { ...options } || {
@@ -19,10 +24,11 @@ export class SessionRecorder {
     };
 
     this.#options.maxDuration = this.#options.maxDuration || 30 * 60 * 1000;
+    this.#url = window.location.href;
+  }
 
-    this.#sessionAttributes = {
-      url: window.location.href,
-    };
+  #getEmptyTransientState(): TransientSession {
+    return { startTime: Date.now(), events: { video: [] } };
   }
 
   start(): void {
@@ -30,33 +36,33 @@ export class SessionRecorder {
       this.#stopVideoRecording = recordVideo({
         emit: (event, isCheckout) => {
           if (isCheckout) {
-            this.#videoEventsMatrix = [this.#videoEventsMatrix[1], []];
+            this.#transientSessions = [this.#transientSessions[1], this.#getEmptyTransientState()];
           }
-          this.#videoEventsMatrix[1].push(event);
+          this.#transientSessions[1].events.video.push(event);
         },
         checkoutEveryNms: this.#options.maxDuration,
       });
     }
-    this.#sessionAttributes.startTime = Date.now();
+    this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
   }
 
   stop(): void {
     this.#stopVideoRecording?.();
-    this.#sessionAttributes.duration = this.getSessionDuration();
-  }
-
-  getSessionDuration(): number {
-    return Date.now() - this.#sessionAttributes.startTime;
+    this.#stopTime = Date.now();
   }
 
   getSession(): RQSession {
+    const startTime = this.#transientSessions[0].startTime;
+    const videoEvents = this.#transientSessions[0].events.video.concat(this.#transientSessions[1].events.video);
+
     return {
       attributes: {
-        ...this.#sessionAttributes,
-        duration: this.#sessionAttributes.duration || this.getSessionDuration(),
+        url: this.#url,
+        startTime,
+        duration: (this.#stopTime || Date.now()) - startTime,
       },
       events: {
-        video: this.#videoEventsMatrix[0].concat(this.#videoEventsMatrix[1]),
+        video: videoEvents,
       },
     };
   }
