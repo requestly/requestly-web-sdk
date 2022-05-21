@@ -5,7 +5,7 @@
 ### Add to website as `<script>` tag
 
 ```html
-<script src="https://unpkg.com/@requestly/web-sdk/dist/requestly-web-sdk.min.js" crossorigin></script>
+<script src="https://unpkg.com/@requestly/web-sdk@latest/dist/requestly-web-sdk.min.js" crossorigin></script>
 ```
 This would expose `Requestly` as a global variable.
 
