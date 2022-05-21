@@ -1,53 +1,63 @@
 import { record as recordVideo } from 'rrweb';
-import { RQSession } from '../types';
+import { eventWithTime } from 'rrweb/typings/types';
+import { RQSession, RQSessionAttributes } from '../types';
 
 export interface SessionRecorderOptions {
+  maxDuration?: number;
   video?: boolean;
-  networkRequests?: boolean;
 }
 
 export class SessionRecorder {
   #options: SessionRecorderOptions;
-  #session: RQSession;
   #stopVideoRecording: () => void;
+  #sessionAttributes: RQSessionAttributes;
+  #videoEventsMatrix: [eventWithTime[], eventWithTime[]] = [[], []];
 
   constructor(options: SessionRecorderOptions) {
-    this.#options = options || {
+    this.#options = { ...options } || {
       video: true,
-      networkRequests: true,
     };
 
-    this.#session = {
-      attributes: {
-        url: window.location.href,
-      },
-      events: {},
+    this.#options.maxDuration = this.#options.maxDuration || 30 * 60 * 1000;
+
+    this.#sessionAttributes = {
+      url: window.location.href,
     };
   }
 
   start(): void {
     if (this.#options.video) {
-      this.#session.events.video = [];
-
       this.#stopVideoRecording = recordVideo({
-        emit: (event) => {
-          this.#session.events.video.push(event);
+        emit: (event, isCheckout) => {
+          if (isCheckout) {
+            this.#videoEventsMatrix = [this.#videoEventsMatrix[1], []];
+          }
+          this.#videoEventsMatrix[1].push(event);
         },
+        checkoutEveryNms: this.#options.maxDuration,
       });
     }
-    this.#session.attributes.startTime = Date.now();
+    this.#sessionAttributes.startTime = Date.now();
   }
 
   stop(): void {
     this.#stopVideoRecording?.();
-    this.#session.attributes.duration = Date.now() - this.#session.attributes.startTime;
+    this.#sessionAttributes.duration = this.getSessionDuration();
+  }
+
+  getSessionDuration(): number {
+    return Date.now() - this.#sessionAttributes.startTime;
   }
 
   getSession(): RQSession {
-    let { attributes } = this.#session;
-    if (!attributes.duration) {
-      attributes = { ...attributes, duration: Date.now() - attributes.startTime };
-    }
-    return { attributes, events: this.#session.events };
+    return {
+      attributes: {
+        ...this.#sessionAttributes,
+        duration: this.#sessionAttributes.duration || this.getSessionDuration(),
+      },
+      events: {
+        video: this.#videoEventsMatrix[0].concat(this.#videoEventsMatrix[1]),
+      },
+    };
   }
 }
