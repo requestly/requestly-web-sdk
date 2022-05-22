@@ -23,7 +23,7 @@ export class SessionRecorder {
       video: true,
     };
 
-    this.#options.maxDuration = this.#options.maxDuration || 30 * 60 * 1000;
+    this.#options.maxDuration = this.#options.maxDuration || 10 * 60 * 1000;
     this.#url = window.location.href;
   }
 
@@ -33,6 +33,7 @@ export class SessionRecorder {
 
   start(): void {
     if (this.#options.video) {
+      this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
       this.#stopVideoRecording = recordVideo({
         emit: (event, isCheckout) => {
           if (isCheckout) {
@@ -43,7 +44,6 @@ export class SessionRecorder {
         checkoutEveryNms: this.#options.maxDuration,
       });
     }
-    this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
   }
 
   stop(): void {
