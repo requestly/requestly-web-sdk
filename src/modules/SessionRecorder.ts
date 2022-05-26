@@ -1,9 +1,10 @@
-import { record as recordVideo } from 'rrweb';
+import { record as recordVideo, getRecordConsolePlugin } from 'rrweb';
 import { RQSession, RQSessionEvents } from '../types';
 
 export interface SessionRecorderOptions {
   maxDuration?: number;
   video?: boolean;
+  console?: boolean;
 }
 
 interface TransientSession {
@@ -32,6 +33,11 @@ export class SessionRecorder {
   }
 
   start(): void {
+    const plugins = [];
+    if (this.#options.console) {
+      plugins.push(getRecordConsolePlugin());
+    }
+
     if (this.#options.video) {
       this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
       this.#stopVideoRecording = recordVideo({
@@ -42,6 +48,7 @@ export class SessionRecorder {
           this.#transientSessions[1].events.video.push(event);
         },
         checkoutEveryNms: this.#options.maxDuration,
+        plugins,
       });
     }
   }
