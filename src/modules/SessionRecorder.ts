@@ -1,4 +1,4 @@
-import { record as recordVideo, getRecordConsolePlugin } from 'rrweb';
+import { record, getRecordConsolePlugin } from 'rrweb';
 import { RQSession, RQSessionEvents } from '../types';
 
 export interface SessionRecorderOptions {
@@ -14,7 +14,7 @@ interface TransientSession {
 
 export class SessionRecorder {
   #options: SessionRecorderOptions;
-  #stopVideoRecording: () => void;
+  #stopRecording: () => void;
   #url: string;
   #stopTime: number;
   #transientSessions: [TransientSession, TransientSession];
@@ -29,7 +29,7 @@ export class SessionRecorder {
   }
 
   #getEmptyTransientState(): TransientSession {
-    return { startTime: Date.now(), events: { video: [] } };
+    return { startTime: Date.now(), events: { rrweb: [] } };
   }
 
   start(): void {
@@ -40,12 +40,12 @@ export class SessionRecorder {
 
     if (this.#options.video) {
       this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
-      this.#stopVideoRecording = recordVideo({
+      this.#stopRecording = record({
         emit: (event, isCheckout) => {
           if (isCheckout) {
             this.#transientSessions = [this.#transientSessions[1], this.#getEmptyTransientState()];
           }
-          this.#transientSessions[1].events.video.push(event);
+          this.#transientSessions[1].events.rrweb.push(event);
         },
         checkoutEveryNms: this.#options.maxDuration,
         plugins,
@@ -54,13 +54,13 @@ export class SessionRecorder {
   }
 
   stop(): void {
-    this.#stopVideoRecording?.();
+    this.#stopRecording?.();
     this.#stopTime = Date.now();
   }
 
   getSession(): RQSession {
     const startTime = this.#transientSessions[0].startTime;
-    const videoEvents = this.#transientSessions[0].events.video.concat(this.#transientSessions[1].events.video);
+    const rrwebEvents = this.#transientSessions[0].events.rrweb.concat(this.#transientSessions[1].events.rrweb);
 
     return {
       attributes: {
@@ -69,7 +69,7 @@ export class SessionRecorder {
         duration: (this.#stopTime || Date.now()) - startTime,
       },
       events: {
-        video: videoEvents,
+        rrweb: rrwebEvents,
       },
     };
   }

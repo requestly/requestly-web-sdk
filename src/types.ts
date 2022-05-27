@@ -7,7 +7,7 @@ export interface RQSessionAttributes {
 }
 
 export interface RQSessionEvents {
-  video?: eventWithTime[];
+  rrweb?: eventWithTime[];
 }
 
 export interface RQSession {
