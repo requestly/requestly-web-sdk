@@ -3,7 +3,6 @@ import { RQSession, RQSessionEvents } from '../types';
 
 export interface SessionRecorderOptions {
   maxDuration?: number;
-  video?: boolean;
   console?: boolean;
 }
 
@@ -20,11 +19,10 @@ export class SessionRecorder {
   #transientSessions: [TransientSession, TransientSession];
 
   constructor(options: SessionRecorderOptions) {
-    this.#options = { ...options } || {
-      video: true,
+    this.#options = {
+      ...options,
+      maxDuration: options.maxDuration || 10 * 60 * 1000,
     };
-
-    this.#options.maxDuration = this.#options.maxDuration || 10 * 60 * 1000;
     this.#url = window.location.href;
   }
 
@@ -38,19 +36,17 @@ export class SessionRecorder {
       plugins.push(getRecordConsolePlugin());
     }
 
-    if (this.#options.video) {
-      this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
-      this.#stopRecording = record({
-        emit: (event, isCheckout) => {
-          if (isCheckout) {
-            this.#transientSessions = [this.#transientSessions[1], this.#getEmptyTransientState()];
-          }
-          this.#transientSessions[1].events.rrweb.push(event);
-        },
-        checkoutEveryNms: this.#options.maxDuration,
-        plugins,
-      });
-    }
+    this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
+    this.#stopRecording = record({
+      emit: (event, isCheckout) => {
+        if (isCheckout) {
+          this.#transientSessions = [this.#transientSessions[1], this.#getEmptyTransientState()];
+        }
+        this.#transientSessions[1].events.rrweb.push(event);
+      },
+      checkoutEveryNms: this.#options.maxDuration,
+      plugins,
+    });
   }
 
   stop(): void {
