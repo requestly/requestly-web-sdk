@@ -1,7 +1,22 @@
 ## Network Module - WIP
 
 > :warning: **This work is still in progress.** 
-> Below functionality is still not available in current released build. The contract is also subject to change.
+> Below functions are still under development and the contract is subject to change.
+
+### Intercept API requests and responses
+
+```javascript
+Requestly.Network.intercept(urlPattern, callback);
+```
+
+Example usage:
+```javascript
+Requestly.Network.intercept(/^https:\/\/example\.com.*/, (args) => {
+  const { method, url, requestHeaders, requestData, responseType, responseHeaders, response, time } = args;
+  // your logic 
+  return responseToOverride; // or return null
+});
+```
 
 ### Mock API response payload
 
@@ -11,7 +26,7 @@ Requestly.Network.mockResponsePayload(urlPattern, { myField: 'staticCustomValue'
 
 // Evaluate and return custom response for specified URL pattern
 Requestly.Network.mockResponsePayload(urlPattern, (args) => {
-  const {method, url, response, responseType, requestHeaders, requestData, responseJSON} = args;
+  const { method, url, response, responseType, requestHeaders, requestData, responseJSON } = args;
   
   // evaluate response from properties received in args
   return { myField: 'evaluatedCustomValue' };
