@@ -1,5 +1,6 @@
 import { record, getRecordConsolePlugin } from 'rrweb';
-import { RQSession, RQSessionEvents } from '../types';
+import { Environment, RQSession, RQSessionEvents } from '../types';
+import Bowser from 'bowser';
 
 export interface SessionRecorderOptions {
   maxDuration?: number;
@@ -15,6 +16,7 @@ export class SessionRecorder {
   #options: SessionRecorderOptions;
   #stopRecording: () => void;
   #url: string;
+  #environment: Environment;
   #stopTime: number;
   #transientSessions: [TransientSession, TransientSession];
 
@@ -24,6 +26,26 @@ export class SessionRecorder {
       maxDuration: options.maxDuration || 10 * 60 * 1000,
     };
     this.#url = window.location.href;
+
+    const userAgent = window.navigator.userAgent;
+    const parsedEnvironment = Bowser.parse(userAgent);
+    this.#environment = {
+      userAgent,
+      language: window.navigator.languages?.[0] || window.navigator.language,
+      browser: parsedEnvironment.browser,
+      os: parsedEnvironment.os,
+      // @ts-ignore
+      platform: parsedEnvironment.platform,
+      browserDimensions: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+      screenDimensions: {
+        width: window.screen.width,
+        height: window.screen.height,
+      },
+      devicePixelRatio: window.devicePixelRatio,
+    };
   }
 
   #getEmptyTransientState(): TransientSession {
@@ -63,6 +85,7 @@ export class SessionRecorder {
         url: this.#url,
         startTime,
         duration: (this.#stopTime || Date.now()) - startTime,
+        environment: this.#environment,
       },
       events: {
         rrweb: rrwebEvents,

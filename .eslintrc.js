@@ -11,7 +11,8 @@ module.exports = {
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-explicit-any': ['error', { ignoreRestArgs: false, fixToUnknown: false }],
-    '@typescript-eslint/no-var-requires': 0,
+    '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/ban-ts-ignore': 'off',
     quotes: ['error', 'single'],
   },
