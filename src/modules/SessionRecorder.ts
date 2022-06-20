@@ -7,18 +7,12 @@ export interface SessionRecorderOptions {
   console?: boolean;
 }
 
-interface TransientSession {
-  startTime: number;
-  events: RQSessionEvents;
-}
-
 export class SessionRecorder {
   #options: SessionRecorderOptions;
   #stopRecording: () => void;
   #url: string;
   #environment: Environment;
-  #stopTime: number;
-  #transientSessions: [TransientSession, TransientSession];
+  #lastTwoSessionEvents: [RQSessionEvents, RQSessionEvents];
 
   constructor(options: SessionRecorderOptions) {
     this.#options = {
@@ -48,8 +42,8 @@ export class SessionRecorder {
     };
   }
 
-  #getEmptyTransientState(): TransientSession {
-    return { startTime: Date.now(), events: { rrweb: [] } };
+  #getEmptySessionEvents(): RQSessionEvents {
+    return { rrweb: [] };
   }
 
   start(): void {
@@ -58,13 +52,13 @@ export class SessionRecorder {
       plugins.push(getRecordConsolePlugin());
     }
 
-    this.#transientSessions = [this.#getEmptyTransientState(), this.#getEmptyTransientState()];
+    this.#lastTwoSessionEvents = [this.#getEmptySessionEvents(), this.#getEmptySessionEvents()];
     this.#stopRecording = record({
       emit: (event, isCheckout) => {
         if (isCheckout) {
-          this.#transientSessions = [this.#transientSessions[1], this.#getEmptyTransientState()];
+          this.#lastTwoSessionEvents = [this.#lastTwoSessionEvents[1], this.#getEmptySessionEvents()];
         }
-        this.#transientSessions[1].events.rrweb.push(event);
+        this.#lastTwoSessionEvents[1].rrweb.push(event);
       },
       checkoutEveryNms: this.#options.maxDuration,
       plugins,
@@ -73,18 +67,19 @@ export class SessionRecorder {
 
   stop(): void {
     this.#stopRecording?.();
-    this.#stopTime = Date.now();
+    this.#stopRecording = null;
   }
 
   getSession(): RQSession {
-    const startTime = this.#transientSessions[0].startTime;
-    const rrwebEvents = this.#transientSessions[0].events.rrweb.concat(this.#transientSessions[1].events.rrweb);
+    const rrwebEvents = this.#lastTwoSessionEvents[0].rrweb.concat(this.#lastTwoSessionEvents[1].rrweb);
+    const firstEventTime = rrwebEvents[0]?.timestamp;
+    const lastEventTime = rrwebEvents[rrwebEvents.length - 1]?.timestamp;
 
     return {
       attributes: {
         url: this.#url,
-        startTime,
-        duration: (this.#stopTime || Date.now()) - startTime,
+        startTime: firstEventTime,
+        duration: lastEventTime - firstEventTime,
         environment: this.#environment,
       },
       events: {
