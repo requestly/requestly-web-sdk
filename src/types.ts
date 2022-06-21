@@ -35,9 +35,19 @@ export interface RQSessionAttributes {
   environment: Environment;
 }
 
-export interface RQSessionEvents {
-  rrweb?: eventWithTime[];
+export enum RQSessionEventType {
+  RRWEB = 'rrweb',
 }
+
+export interface RQSessionEventDataType {
+  [RQSessionEventType.RRWEB]: eventWithTime;
+}
+
+export type RQSessionEvent = RQSessionEventDataType[RQSessionEventType];
+
+export type RQSessionEvents = {
+  [eventType in RQSessionEventType]?: RQSessionEventDataType[eventType][];
+};
 
 export interface RQSession {
   attributes: RQSessionAttributes;
