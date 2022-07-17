@@ -14,6 +14,7 @@ module.exports = {
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/ban-ts-ignore': 'off',
+    'prefer-rest-params': 'off',
     quotes: ['error', 'single'],
   },
   overrides: [

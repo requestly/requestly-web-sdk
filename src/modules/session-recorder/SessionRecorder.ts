@@ -1,5 +1,5 @@
 import { record, getRecordConsolePlugin, PLUGIN_NAME as CONSOLE_PLUGIN, EventType } from 'rrweb';
-import { Environment, RQSession, RQSessionEvent, RQSessionEvents, RQSessionEventType } from '../types';
+import { Environment, RQSession, RQSessionEvent, RQSessionEvents, RQSessionEventType } from './types';
 import Bowser from 'bowser';
 
 const POST_MESSAGE_SOURCE = 'requestly:websdk:sessionRecorder';

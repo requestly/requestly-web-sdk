@@ -1,4 +1,4 @@
-export * from './modules/SessionRecorder';
-export * from './types';
+export * from './modules/session-recorder';
+export * from './modules/network';
 
 export const VERSION = '__VERSION__';
