@@ -9,7 +9,7 @@ interface InterceptRecord {
 const records: InterceptRecord[] = [];
 
 export const addInterceptor = (urlPattern: RegExp, interceptor: NetworkInterceptor): void => {
-  records.push({ urlPattern, interceptor });
+  records.unshift({ urlPattern, interceptor });
 };
 
 export const getInterceptorForUrl = (url: string): NetworkInterceptor => {

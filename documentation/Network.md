@@ -1,43 +1,54 @@
-## Network Module - WIP
+## Network Module
 
-> :warning: **This work is still in progress.** 
-> Below functions are still under development and the contract is subject to change.
-
-### Intercept API requests and responses
+### Intercept API request and override response
 
 ```javascript
 Requestly.Network.intercept(urlPattern, callback);
 ```
 
+Invokes `callback` whenever a request URL matches `urlPattern` regex. 
+The return value from `callback` can be used to override the response.
+
 Example usage:
 ```javascript
 Requestly.Network.intercept(/^https:\/\/example\.com.*/, (args) => {
-  const { method, url, requestHeaders, requestData, responseType, responseHeaders, response, time } = args;
+  const { method, url, response } = args;
   // your logic 
-  return responseToOverride; // or return null
+  return { body: responseToOverride }; // or return null if you don't want to override response
 });
 ```
 
-### Mock API response payload
+#### Specifications:
 
-```javascript
-// Return static custom response for specified URL pattern
-Requestly.Network.mockResponsePayload(urlPattern, { myField: 'staticCustomValue' });
+`urlPattern` - A RegExp pattern to match with the request URL.
 
-// Evaluate and return custom response for specified URL pattern
-Requestly.Network.mockResponsePayload(urlPattern, (args) => {
-  const { method, url, response, responseType, requestHeaders, requestData, responseJSON } = args;
-  
-  // evaluate response from properties received in args
-  return { myField: 'evaluatedCustomValue' };
-});
+The corresponding callback passed to `intercept` method will be invoked with an object `args`.
 
-// Clear response mock for specified URL pattern
-Requestly.Network.unmockResponsePayload(urlPattern);
+> **Note:**
+> If there are multiple URL patterns satisfying a request URL, only the lastest interceptor callback will be invoked.
 
-// Temporarily disable mocking of API response
-Requestly.Network.disableMocks();
+All properties in `args` object received in `intercept` method callback:
 
-// Enable back mocking of API response
-Requestly.Network.enableMocks();
-```
+| Argument | Description |
+| -------- | ----------- |
+| api | API used to make AJAX request - "xmlhttprequest" or "fetch" |
+| method | Request method like "GET", "POST", "PUT", etc. |
+| url | Request URL |
+| requestHeaders | A JSON object denoting key-value pairs where key is request header name and value is header value |
+| requestData | Request payload. In case of GET request, it will be a JSON object denoting query parameters in URL |
+| responseType | Type of data contained in response. In case of [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType), it will be "text", "json" etc. In case of `fetch`, it will be `content-type` header in response, e.g. `application/json`. |
+| responseHeaders | A JSON object denoting key-value pairs where key is response header name and value is header value |
+| response | Original response body |
+| responseJSON | JSON object parsed from response, if response is of JSON type.  |
+| status | HTTP response status code |
+| statusText | HTTP response status text |
+| time | Response time in milliseconds |
+
+Attributes of response which can be returned from `intercept` method callback to override response:
+
+| Attribute | Description |
+| --------- | ----------- |
+| body | Custom response body. No need to stringify if response type is JSON. |
+| headers | Custom response headers |
+| status | Custom HTTP response status code |
+| statusText | Custom HTTP response status text |
