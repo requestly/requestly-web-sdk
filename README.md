@@ -31,3 +31,4 @@ import * as Requestly from '@requestly/web-sdk';
 Check documentation for different modules exposed by SDK.
 
 - [SessionRecorder](documentation/SessionRecorder.md)
+- [Network](documentation/Network.md)
