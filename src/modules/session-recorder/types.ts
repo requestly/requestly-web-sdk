@@ -37,16 +37,34 @@ export interface RQSessionAttributes {
 
 export enum RQSessionEventType {
   RRWEB = 'rrweb',
+  NETWORK = 'network',
 }
 
+export type CommonEventData = {
+  frameUrl?: string;
+};
+
+export type RRWebEventData = CommonEventData & eventWithTime;
+
+export type NetworkEventData = CommonEventData & {
+  timestamp: number;
+  method: string;
+  url: string;
+  requestData: unknown;
+  response: unknown;
+  status: number;
+  time?: number;
+};
+
 export interface RQSessionEventDataType {
-  [RQSessionEventType.RRWEB]: eventWithTime;
+  [RQSessionEventType.RRWEB]: RRWebEventData;
+  [RQSessionEventType.NETWORK]: NetworkEventData;
 }
 
 export type RQSessionEvent = RQSessionEventDataType[RQSessionEventType];
 
 export type RQSessionEvents = {
-  [eventType in RQSessionEventType]?: RQSessionEventDataType[eventType][];
+  [eventType in RQSessionEventType]?: RQSessionEvent[];
 };
 
 export interface RQSession {

@@ -52,3 +52,10 @@ Attributes of response which can be returned from `intercept` method callback to
 | headers | Custom response headers |
 | status | Custom HTTP response status code |
 | statusText | Custom HTTP response status text |
+
+### Clear all API interceptors
+
+```javascript
+Requestly.Network.clearInterceptors();
+```
+Stops watching API requests by clearing all registered URL interceptors.

@@ -4,6 +4,7 @@
 // Instantiate Requestly Session Recorder
 const sessionRecorder = new Requestly.SessionRecorder({
   console: true, // record console logs
+  network: true, // record network API requests
   maxDuration: 10 * 60 * 1000, // last `maxDuration` milliseconds of session should only be recorded, default 10mins
 });
 

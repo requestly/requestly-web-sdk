@@ -27,4 +27,4 @@ export interface CustomResponse {
   statusText?: string;
 }
 
-export type NetworkInterceptor = (args: NetworkInterceptorArgs) => CustomResponse;
+export type NetworkInterceptor = (args: NetworkInterceptorArgs) => void | CustomResponse;

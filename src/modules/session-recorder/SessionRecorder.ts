@@ -1,6 +1,15 @@
 import { record, getRecordConsolePlugin, PLUGIN_NAME as CONSOLE_PLUGIN, EventType } from 'rrweb';
-import { Environment, RQSession, RQSessionEvent, RQSessionEvents, RQSessionEventType } from './types';
+import {
+  Environment,
+  NetworkEventData,
+  RQSession,
+  RQSessionEvent,
+  RQSessionEvents,
+  RQSessionEventType,
+  RRWebEventData,
+} from './types';
 import Bowser from 'bowser';
+import { Network } from '../network';
 
 const POST_MESSAGE_SOURCE = 'requestly:websdk:sessionRecorder';
 const RELAY_EVENT_MESSAGE_ACTION = 'relayEventToTopDocument';
@@ -14,6 +23,7 @@ interface RelayEventMessagePayload {
 export interface SessionRecorderOptions {
   maxDuration?: number;
   console?: boolean;
+  network?: boolean;
   relayEventsToTop?: boolean;
 }
 
@@ -42,8 +52,10 @@ export class SessionRecorder {
 
         if (message.data.action === RELAY_EVENT_MESSAGE_ACTION) {
           const { eventType, event, url } = message.data.payload as RelayEventMessagePayload;
-          const eventWithUrl = { ...event, url };
-          this.#lastTwoSessionEvents[1]?.[eventType]?.push(eventWithUrl);
+          this.#addEvent(eventType, {
+            ...event,
+            frameUrl: url,
+          });
         }
       });
     }
@@ -67,6 +79,11 @@ export class SessionRecorder {
           },
         });
       }
+
+      this.#interceptNetworkRequests((event) => {
+        this.#relayEventToTopDocument(RQSessionEventType.NETWORK, event);
+      });
+
       return;
     }
 
@@ -78,14 +95,19 @@ export class SessionRecorder {
         if (isCheckout) {
           this.#lastTwoSessionEvents = [this.#lastTwoSessionEvents[1], this.#getEmptySessionEvents()];
         }
-        this.#lastTwoSessionEvents[1][RQSessionEventType.RRWEB].push(event);
+        this.#addEvent(RQSessionEventType.RRWEB, event);
       },
+    });
+
+    this.#interceptNetworkRequests((event) => {
+      this.#addEvent(RQSessionEventType.NETWORK, event);
     });
   }
 
   stop(): void {
     this.#stopRecording?.();
     this.#stopRecording = null;
+    Network.clearInterceptors();
   }
 
   getSession(): RQSession {
@@ -93,9 +115,12 @@ export class SessionRecorder {
       return null;
     }
 
-    const rrwebEvents = this.#lastTwoSessionEvents[0][RQSessionEventType.RRWEB].concat(
-      this.#lastTwoSessionEvents[1][RQSessionEventType.RRWEB],
-    );
+    const events: RQSessionEvents = {};
+    Object.values(RQSessionEventType).forEach((eventType) => {
+      events[eventType] = this.#lastTwoSessionEvents[0][eventType].concat(this.#lastTwoSessionEvents[1][eventType]);
+    });
+
+    const rrwebEvents = events[RQSessionEventType.RRWEB] as RRWebEventData[];
     const firstEventTime = rrwebEvents[0]?.timestamp;
     const lastEventTime = rrwebEvents[rrwebEvents.length - 1]?.timestamp;
 
@@ -106,10 +131,30 @@ export class SessionRecorder {
         duration: lastEventTime - firstEventTime,
         environment: this.#environment,
       },
-      events: {
-        rrweb: rrwebEvents,
-      },
+      events,
     };
+  }
+
+  #interceptNetworkRequests(captureEventFn: (event: NetworkEventData) => void): void {
+    if (!this.#options.network) {
+      return;
+    }
+
+    Network.intercept(/.*/, ({ method, url, requestData, response, status, time }) => {
+      captureEventFn({
+        timestamp: Date.now(),
+        method,
+        url,
+        requestData,
+        response,
+        status,
+        time,
+      });
+    });
+  }
+
+  #addEvent(eventType: RQSessionEventType, event: RQSessionEvent): void {
+    this.#lastTwoSessionEvents[1]?.[eventType]?.push(event);
   }
 
   #isCrossDomainFrame(): boolean {
@@ -146,7 +191,12 @@ export class SessionRecorder {
   }
 
   #getEmptySessionEvents(): RQSessionEvents {
-    return { [RQSessionEventType.RRWEB]: [] };
+    const emptySessionEvents: RQSessionEvents = {};
+
+    Object.values(RQSessionEventType).forEach((eventType) => {
+      emptySessionEvents[eventType] = [];
+    });
+    return emptySessionEvents;
   }
 
   #relayEventToTopDocument(eventType: RQSessionEventType, event: RQSessionEvent): void {

@@ -16,3 +16,7 @@ export const getInterceptorForUrl = (url: string): NetworkInterceptor => {
   const record = records.find(({ urlPattern }) => urlPattern.test(getAbsoluteUrl(url)));
   return record?.interceptor;
 };
+
+export const clearInterceptors = (): void => {
+  records.length = 0;
+};
