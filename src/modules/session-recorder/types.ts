@@ -53,7 +53,7 @@ export type NetworkEventData = CommonEventData & {
   requestData: unknown;
   response: unknown;
   status: number;
-  time?: number;
+  responseTime?: number;
 };
 
 export interface RQSessionEventDataType {

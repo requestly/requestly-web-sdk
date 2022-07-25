@@ -3,19 +3,19 @@
 ### Intercept API request and override response
 
 ```javascript
-Requestly.Network.intercept(urlPattern, callback);
+Requestly.Network.intercept(urlPattern, callback, overrideResponse);
 ```
 
 Invokes `callback` whenever a request URL matches `urlPattern` regex. 
-The return value from `callback` can be used to override the response.
+If `overrideResponse` is passed as `true`, the return value from `callback` will be used to override the response.
 
 Example usage:
 ```javascript
 Requestly.Network.intercept(/^https:\/\/example\.com.*/, (args) => {
   const { method, url, response } = args;
   // your logic 
-  return { body: responseToOverride }; // or return null if you don't want to override response
-});
+  return { body: responseToOverride }; // or return null if you don't want to override response in some case
+}, true);
 ```
 
 #### Specifications:
@@ -36,13 +36,13 @@ All properties in `args` object received in `intercept` method callback:
 | url | Request URL |
 | requestHeaders | A JSON object denoting key-value pairs where key is request header name and value is header value |
 | requestData | Request payload. In case of GET request, it will be a JSON object denoting query parameters in URL |
-| responseType | Type of data contained in response. In case of [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType), it will be "text", "json" etc. In case of `fetch`, it will be `content-type` header in response, e.g. `application/json`. |
 | responseHeaders | A JSON object denoting key-value pairs where key is response header name and value is header value |
+| responseType | Type of data contained in response. This is available only in case of [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType).
 | response | Original response body |
 | responseJSON | JSON object parsed from response, if response is of JSON type.  |
+| responseTime | Response time in milliseconds |
 | status | HTTP response status code |
 | statusText | HTTP response status text |
-| time | Response time in milliseconds |
 
 Attributes of response which can be returned from `intercept` method callback to override response:
 

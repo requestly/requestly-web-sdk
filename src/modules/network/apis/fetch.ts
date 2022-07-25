@@ -1,33 +1,19 @@
-import { getInterceptorForUrl } from '../interceptors';
-import { ApiType, CustomResponse, NetworkInterceptorArgs } from '../types';
-import { convertSearchParamsToJSON, getCustomResponse, jsonifyValidJSONString, parseHeaders } from '../utils';
+import { getInterceptRecordForUrl } from '../interceptors';
+import { ApiType, NetworkInterceptorArgs } from '../types';
+import {
+  convertSearchParamsToJSON,
+  getCustomResponse,
+  isJsonResponse,
+  jsonifyValidJSONString,
+  parseHeaders,
+} from '../utils';
 
-const _fetch = fetch;
-
-// @ts-ignore
-fetch = async (resource: RequestInfo, initOptions: RequestInit = {}) => {
-  const getOriginalResponse = (): Promise<Response> => _fetch(resource, initOptions);
-
-  let request: Request;
-
-  if (resource instanceof Request) {
-    request = resource.clone();
-  } else {
-    request = new Request(resource.toString(), initOptions);
-  }
-
-  const startTime = performance.now();
-  const fetchedResponse = await getOriginalResponse();
-  const time = Math.floor(performance.now() - startTime);
-
-  const url = fetchedResponse.url; // final URL obtained after any redirects
-
-  const interceptor = getInterceptorForUrl(url);
-
-  if (!interceptor) {
-    return fetchedResponse;
-  }
-
+const getInterceptorArgs = async (
+  request: Request,
+  response: Response,
+  responseTime: number,
+): Promise<NetworkInterceptorArgs> => {
+  const url = response.url;
   const method = request.method;
   const requestHeaders = parseHeaders(request.headers);
   let requestData: unknown;
@@ -38,34 +24,65 @@ fetch = async (resource: RequestInfo, initOptions: RequestInit = {}) => {
     requestData = convertSearchParamsToJSON(url);
   }
 
-  const fetchedResponseData = await fetchedResponse.text();
-  const responseHeaders = parseHeaders(fetchedResponse.headers);
-  const responseType = responseHeaders['content-type'];
-  const isResponseJSON = responseType && responseType.indexOf('application/json') !== -1;
-  const fetchedResponseDataAsJson = jsonifyValidJSONString(fetchedResponseData);
+  const responseData = await response.text();
+  const responseHeaders = parseHeaders(response.headers);
+  const responseDataAsJson = jsonifyValidJSONString(responseData);
 
-  const args: NetworkInterceptorArgs = {
+  return {
     api: ApiType.FETCH,
-    time,
     method,
     url,
     requestHeaders,
     requestData,
-    responseType,
-    response: fetchedResponseData,
-    responseJSON: fetchedResponseDataAsJson,
-    responseHeaders: responseHeaders,
-    status: fetchedResponse.status,
-    statusText: fetchedResponse.statusText,
+    response: responseData,
+    responseJSON: responseDataAsJson,
+    responseHeaders,
+    responseTime,
+    status: response.status,
+    statusText: response.statusText,
   };
+};
 
-  const originalResponse: CustomResponse = {
-    body: fetchedResponseData,
-    headers: responseHeaders,
-    status: fetchedResponse.status,
-    statusText: fetchedResponse.statusText,
-  };
-  const customResponse = await getCustomResponse(interceptor, args, originalResponse, isResponseJSON);
+const _fetch = fetch;
+
+// @ts-ignore
+fetch = async (resource: RequestInfo, initOptions: RequestInit = {}) => {
+  const getOriginalResponse = (): Promise<Response> => _fetch(resource, initOptions);
+
+  let request: Request;
+  if (resource instanceof Request) {
+    request = resource.clone();
+  } else {
+    request = new Request(resource.toString(), initOptions);
+  }
+
+  const startTime = performance.now();
+  const originalResponse = await getOriginalResponse();
+  const responseTime = Math.floor(performance.now() - startTime);
+
+  const url = originalResponse.url; // final URL obtained after any redirects
+
+  const { interceptor, overrideResponse } = getInterceptRecordForUrl(url) || {};
+
+  if (!interceptor) {
+    return originalResponse;
+  }
+
+  const response = originalResponse.clone();
+
+  if (!overrideResponse) {
+    // do not wait for interceptor to finish execution
+    getInterceptorArgs(request, response, responseTime).then(interceptor);
+    return originalResponse;
+  }
+
+  const interceptorArgs = await getInterceptorArgs(request, response, responseTime);
+  const customResponse = await getCustomResponse(interceptor, interceptorArgs, isJsonResponse(response));
+
+  if (!customResponse) {
+    // nothing to override, return original response
+    return originalResponse;
+  }
 
   return new Response(new Blob([customResponse.body as BlobPart]), {
     status: customResponse.status,

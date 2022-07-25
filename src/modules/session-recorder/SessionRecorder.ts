@@ -140,7 +140,7 @@ export class SessionRecorder {
       return;
     }
 
-    Network.intercept(/.*/, ({ method, url, requestData, response, status, time }) => {
+    Network.intercept(/.*/, ({ method, url, requestData, response, status, responseTime }) => {
       captureEventFn({
         timestamp: Date.now(),
         method,
@@ -148,7 +148,7 @@ export class SessionRecorder {
         requestData,
         response,
         status,
-        time,
+        responseTime,
       });
     });
   }

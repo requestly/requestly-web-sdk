@@ -11,13 +11,13 @@ export interface NetworkInterceptorArgs {
   url: string;
   requestHeaders: NetworkHeaders;
   requestData: unknown;
-  responseType: string;
   responseHeaders: NetworkHeaders;
+  responseType?: string; // only available in XHR
   response: unknown;
   responseJSON: unknown;
+  responseTime?: number;
   status: number;
   statusText: string;
-  time?: number;
 }
 
 export interface CustomResponse {
@@ -27,4 +27,8 @@ export interface CustomResponse {
   statusText?: string;
 }
 
-export type NetworkInterceptor = (args: NetworkInterceptorArgs) => void | CustomResponse;
+type NetworkInterceptorReturnValue = CustomResponse | void;
+
+export type NetworkInterceptor = (
+  args: NetworkInterceptorArgs,
+) => NetworkInterceptorReturnValue | Promise<NetworkInterceptorReturnValue>;

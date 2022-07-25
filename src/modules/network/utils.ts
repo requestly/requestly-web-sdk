@@ -56,22 +56,31 @@ export const parseHeaders = (headers: unknown): Record<string, string> => {
 export const getCustomResponse = async (
   interceptor: NetworkInterceptor,
   args: NetworkInterceptorArgs,
-  originalResponse: CustomResponse,
   isJsonResponse: boolean,
 ): Promise<CustomResponse> => {
-  const responseFromInterceptor = await interceptor(args);
+  const customResponse = await interceptor(args);
 
-  if (responseFromInterceptor) {
-    if (typeof responseFromInterceptor === 'object' && isJsonResponse) {
-      responseFromInterceptor.body = JSON.stringify(responseFromInterceptor);
+  if (customResponse) {
+    if (typeof customResponse === 'object' && isJsonResponse) {
+      customResponse.body = JSON.stringify(customResponse);
     }
 
-    if (originalResponse.status === 204) {
-      responseFromInterceptor.status = 200;
+    if (args.status === 204) {
+      customResponse.status = 200;
     }
 
-    return { ...originalResponse, ...responseFromInterceptor };
+    return {
+      body: args.response,
+      headers: args.responseHeaders,
+      status: args.status,
+      statusText: args.statusText,
+      ...customResponse,
+    };
   }
 
-  return originalResponse;
+  return null;
+};
+
+export const isJsonResponse = (response: Response): boolean => {
+  return response.headers.get('content-type')?.indexOf('application/json') !== -1;
 };

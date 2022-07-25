@@ -1,20 +1,20 @@
 import { NetworkInterceptor } from './types';
 import { getAbsoluteUrl } from './utils';
 
-interface InterceptRecord {
+export interface InterceptRecord {
   urlPattern: RegExp;
   interceptor: NetworkInterceptor;
+  overrideResponse: boolean;
 }
 
 const records: InterceptRecord[] = [];
 
-export const addInterceptor = (urlPattern: RegExp, interceptor: NetworkInterceptor): void => {
-  records.unshift({ urlPattern, interceptor });
+export const addInterceptor = (urlPattern: RegExp, interceptor: NetworkInterceptor, overrideResponse = false): void => {
+  records.unshift({ urlPattern, interceptor, overrideResponse });
 };
 
-export const getInterceptorForUrl = (url: string): NetworkInterceptor => {
-  const record = records.find(({ urlPattern }) => urlPattern.test(getAbsoluteUrl(url)));
-  return record?.interceptor;
+export const getInterceptRecordForUrl = (url: string): InterceptRecord => {
+  return records.find(({ urlPattern }) => urlPattern.test(getAbsoluteUrl(url)));
 };
 
 export const clearInterceptors = (): void => {

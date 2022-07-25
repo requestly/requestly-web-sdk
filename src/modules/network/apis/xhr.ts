@@ -1,5 +1,5 @@
-import { getInterceptorForUrl } from '../interceptors';
-import { ApiType, CustomResponse, NetworkHeaders, NetworkInterceptorArgs } from '../types';
+import { getInterceptRecordForUrl } from '../interceptors';
+import { ApiType, NetworkHeaders, NetworkInterceptorArgs } from '../types';
 import { getCustomResponse, jsonifyValidJSONString } from '../utils';
 
 interface XMLHttpRequestWithMeta extends XMLHttpRequest {
@@ -11,15 +11,15 @@ interface XMLHttpRequestWithMeta extends XMLHttpRequest {
 
 const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promise<void> {
   if (this.readyState === 4) {
-    const interceptor = getInterceptorForUrl(this.responseURL);
+    const { interceptor, overrideResponse } = getInterceptRecordForUrl(this.responseURL) || {};
 
     if (!interceptor) {
       return;
     }
 
-    let time;
+    let responseTime;
     if (this.startTime) {
-      time = Math.floor(performance.now() - this.startTime);
+      responseTime = Math.floor(performance.now() - this.startTime);
     }
 
     const responseHeaders = {};
@@ -35,9 +35,9 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
 
     const responseType = this.responseType;
 
-    const args: NetworkInterceptorArgs = {
+    const interceptorArgs: NetworkInterceptorArgs = {
       api: ApiType.XHR,
-      time,
+      responseTime,
       method: this.method,
       url: this.responseURL,
       requestHeaders: this.requestHeaders,
@@ -50,14 +50,19 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
       statusText: this.statusText,
     };
 
+    if (!overrideResponse) {
+      // do not wait for interceptor to finish execution
+      interceptor(interceptorArgs);
+      return;
+    }
+
     const isJsonResponse = responseType === 'json';
-    const originalResponse: CustomResponse = {
-      body: this.response,
-      headers: responseHeaders,
-      status: this.status,
-      statusText: this.statusText,
-    };
-    const customResponse = await getCustomResponse(interceptor, args, originalResponse, isJsonResponse);
+    const customResponse = await getCustomResponse(interceptor, interceptorArgs, isJsonResponse);
+
+    if (!customResponse) {
+      // nothing to override
+      return;
+    }
 
     Object.defineProperty(this, 'response', {
       get() {
