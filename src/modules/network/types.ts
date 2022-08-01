@@ -15,6 +15,7 @@ export interface NetworkInterceptorArgs {
   responseType?: string; // only available in XHR
   response: unknown;
   responseJSON: unknown;
+  contentType?: string;
   responseTime?: number;
   status: number;
   statusText: string;

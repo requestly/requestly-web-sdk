@@ -48,6 +48,7 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
       responseHeaders,
       status: this.status,
       statusText: this.statusText,
+      contentType: responseHeaders['content-type'],
     };
 
     if (!overrideResponse) {

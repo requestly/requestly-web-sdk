@@ -37,7 +37,8 @@ All properties in `args` object received in `intercept` method callback:
 | requestHeaders | A JSON object denoting key-value pairs where key is request header name and value is header value |
 | requestData | Request payload. In case of GET request, it will be a JSON object denoting query parameters in URL |
 | responseHeaders | A JSON object denoting key-value pairs where key is response header name and value is header value |
-| responseType | Type of data contained in response. This is available only in case of [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType).
+| responseType | Type of data contained in response. This is available only in case of [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType). |
+| contentType | Response header [Content-Type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) |
 | response | Original response body |
 | responseJSON | JSON object parsed from response, if response is of JSON type.  |
 | responseTime | Response time in milliseconds |

@@ -52,6 +52,7 @@ export type NetworkEventData = CommonEventData & {
   url: string;
   requestData: unknown;
   response: unknown;
+  contentType?: string;
   status: number;
   responseTime?: number;
 };

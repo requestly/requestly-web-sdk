@@ -37,6 +37,7 @@ const getInterceptorArgs = async (
     response: responseData,
     responseJSON: responseDataAsJson,
     responseHeaders,
+    contentType: responseHeaders['content-type'],
     responseTime,
     status: response.status,
     statusText: response.statusText,
