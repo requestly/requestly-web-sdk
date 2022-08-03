@@ -97,8 +97,6 @@ export class SessionRecorder {
           const previousSessionRRWebEvents = previousSessionEvents[RQSessionEventType.RRWEB];
           const timeElapsedSinceStart = event.timestamp - previousSessionRRWebEvents[0].timestamp;
 
-          console.log({ timeElapsedSinceStart });
-
           // final session duration should be between T and 2T where T is maxDuration
           if (timeElapsedSinceStart >= 2 * this.#options.maxDuration) {
             previousSessionEvents = this.#getEmptySessionEvents();
