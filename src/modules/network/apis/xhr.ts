@@ -1,6 +1,6 @@
 import { getInterceptRecordForUrl } from '../interceptors';
 import { ApiType, NetworkHeaders, NetworkInterceptorArgs } from '../types';
-import { getCustomResponse, jsonifyValidJSONString } from '../utils';
+import { convertSearchParamsToJSON, getCustomResponse, jsonifyValidJSONString } from '../utils';
 
 interface XMLHttpRequestWithMeta extends XMLHttpRequest {
   startTime: number;
@@ -34,6 +34,13 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
       });
 
     const responseType = this.responseType;
+    let requestData: unknown;
+
+    if (this.method === 'POST') {
+      requestData = jsonifyValidJSONString(this.requestData);
+    } else {
+      requestData = convertSearchParamsToJSON(this.responseURL);
+    }
 
     const interceptorArgs: NetworkInterceptorArgs = {
       api: ApiType.XHR,
@@ -41,7 +48,7 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
       method: this.method,
       url: this.responseURL,
       requestHeaders: this.requestHeaders,
-      requestData: jsonifyValidJSONString(this.requestData),
+      requestData,
       responseType: this.responseType,
       response: this.response,
       responseJSON: jsonifyValidJSONString(this.response),
