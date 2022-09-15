@@ -153,6 +153,11 @@ export class SessionRecorder {
     Network.intercept(
       /.*/,
       ({ method, url, requestData, response, responseURL, contentType, status, responseTime }) => {
+        if (response instanceof ArrayBuffer) {
+          // ArrayBuffer response cannot be serialized
+          return;
+        }
+
         captureEventFn({
           timestamp: Date.now(),
           method,
