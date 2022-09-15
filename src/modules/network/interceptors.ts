@@ -1,5 +1,4 @@
 import { NetworkInterceptor } from './types';
-import { getAbsoluteUrl } from './utils';
 
 export interface InterceptRecord {
   urlPattern: RegExp;
@@ -14,7 +13,7 @@ export const addInterceptor = (urlPattern: RegExp, interceptor: NetworkIntercept
 };
 
 export const getInterceptRecordForUrl = (url: string): InterceptRecord => {
-  return records.find(({ urlPattern }) => urlPattern.test(getAbsoluteUrl(url)));
+  return records.find(({ urlPattern }) => urlPattern.test(url));
 };
 
 export const clearInterceptors = (): void => {

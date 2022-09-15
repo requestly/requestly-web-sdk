@@ -1,17 +1,18 @@
 import { getInterceptRecordForUrl } from '../interceptors';
 import { ApiType, NetworkHeaders, NetworkInterceptorArgs } from '../types';
-import { convertSearchParamsToJSON, getCustomResponse, jsonifyValidJSONString } from '../utils';
+import { convertSearchParamsToJSON, getAbsoluteUrl, getCustomResponse, jsonifyValidJSONString } from '../utils';
 
 interface XMLHttpRequestWithMeta extends XMLHttpRequest {
   startTime: number;
   method: string;
   requestHeaders: NetworkHeaders;
   requestData: unknown;
+  url: string;
 }
 
 const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promise<void> {
   if (this.readyState === 4) {
-    const { interceptor, overrideResponse } = getInterceptRecordForUrl(this.responseURL) || {};
+    const { interceptor, overrideResponse } = getInterceptRecordForUrl(this.url) || {};
 
     if (!interceptor) {
       return;
@@ -39,18 +40,19 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
     if (this.method === 'POST') {
       requestData = jsonifyValidJSONString(this.requestData);
     } else {
-      requestData = convertSearchParamsToJSON(this.responseURL);
+      requestData = convertSearchParamsToJSON(this.url);
     }
 
     const interceptorArgs: NetworkInterceptorArgs = {
       api: ApiType.XHR,
       responseTime,
       method: this.method,
-      url: this.responseURL,
+      url: this.url,
       requestHeaders: this.requestHeaders,
       requestData,
       responseType: this.responseType,
       response: this.response,
+      responseURL: this.responseURL,
       responseJSON: jsonifyValidJSONString(this.response),
       responseHeaders,
       status: this.status,
@@ -110,9 +112,10 @@ Object.entries(XHR).map(([key, val]) => {
 });
 
 const open = XMLHttpRequest.prototype.open;
-XMLHttpRequest.prototype.open = function (method) {
+XMLHttpRequest.prototype.open = function (method, url) {
   this.method = method;
   this.startTime = performance.now();
+  this.url = getAbsoluteUrl(url);
   open.apply(this, arguments);
 };
 

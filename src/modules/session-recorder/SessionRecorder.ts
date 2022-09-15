@@ -150,18 +150,22 @@ export class SessionRecorder {
       return;
     }
 
-    Network.intercept(/.*/, ({ method, url, requestData, response, contentType, status, responseTime }) => {
-      captureEventFn({
-        timestamp: Date.now(),
-        method,
-        url,
-        requestData,
-        response,
-        contentType,
-        status,
-        responseTime,
-      });
-    });
+    Network.intercept(
+      /.*/,
+      ({ method, url, requestData, response, responseURL, contentType, status, responseTime }) => {
+        captureEventFn({
+          timestamp: Date.now(),
+          method,
+          url,
+          requestData,
+          response,
+          responseURL,
+          contentType,
+          status,
+          responseTime,
+        });
+      },
+    );
   }
 
   #addEvent(eventType: RQSessionEventType, event: RQSessionEvent): void {

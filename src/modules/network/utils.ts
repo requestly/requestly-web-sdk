@@ -1,10 +1,9 @@
 import { CustomResponse, NetworkInterceptor, NetworkInterceptorArgs } from './types';
 
 export const getAbsoluteUrl = (url: string): string => {
-  if (url && url.startsWith('/')) {
-    return window.origin + url;
-  }
-  return url;
+  const dummyLink = document.createElement('a');
+  dummyLink.href = url;
+  return dummyLink.href;
 };
 
 export const jsonifyValidJSONString = (mightBeJSONString: unknown): unknown => {
