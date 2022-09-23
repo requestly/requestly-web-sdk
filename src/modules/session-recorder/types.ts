@@ -55,6 +55,7 @@ export type NetworkEventData = CommonEventData & {
   responseURL?: string;
   contentType?: string;
   status: number;
+  statusText?: string;
   responseTime?: number;
 };
 
