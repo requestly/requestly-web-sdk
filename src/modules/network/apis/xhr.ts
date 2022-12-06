@@ -18,10 +18,7 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
       return;
     }
 
-    let responseTime;
-    if (this.startTime) {
-      responseTime = Math.floor(performance.now() - this.startTime);
-    }
+    const responseTime = Math.floor(performance.now() - this.startTime);
 
     const responseHeaders = {};
     this.getAllResponseHeaders()
@@ -62,7 +59,17 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
 
     if (!overrideResponse) {
       // do not wait for interceptor to finish execution
-      interceptor(interceptorArgs);
+      if (this.response instanceof Blob) {
+        this.response.text().then((responseText) => {
+          interceptor({
+            ...interceptorArgs,
+            response: responseText,
+            responseJSON: jsonifyValidJSONString(responseText),
+          });
+        });
+      } else {
+        interceptor(interceptorArgs);
+      }
       return;
     }
 
@@ -112,7 +119,7 @@ Object.entries(XHR).map(([key, val]) => {
 });
 
 const open = XMLHttpRequest.prototype.open;
-XMLHttpRequest.prototype.open = function (method, url) {
+XMLHttpRequest.prototype.open = function (method: string, url: string) {
   this.method = method;
   this.startTime = performance.now();
   this.url = getAbsoluteUrl(url);
@@ -120,13 +127,13 @@ XMLHttpRequest.prototype.open = function (method, url) {
 };
 
 const send = XMLHttpRequest.prototype.send;
-XMLHttpRequest.prototype.send = function (data) {
+XMLHttpRequest.prototype.send = function (data: unknown) {
   this.requestData = data;
   send.apply(this, arguments);
 };
 
 const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
-XMLHttpRequest.prototype.setRequestHeader = function (header, value) {
+XMLHttpRequest.prototype.setRequestHeader = function (header: string, value: string) {
   this.requestHeaders = this.requestHeaders || {};
   this.requestHeaders[header] = value;
   setRequestHeader.apply(this, arguments);
