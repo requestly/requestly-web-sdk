@@ -1,6 +1,6 @@
 import { getInterceptRecordForUrl } from '../interceptors';
 import { ApiType, NetworkHeaders, NetworkInterceptorArgs } from '../types';
-import { convertSearchParamsToJSON, getAbsoluteUrl, getCustomResponse, jsonifyValidJSONString } from '../utils';
+import { convertSearchParamsToJSON, getAbsoluteUrl, getCustomResponse, jsonifyIfPossible } from '../utils';
 
 interface XMLHttpRequestWithMeta extends XMLHttpRequest {
   startTime: number;
@@ -35,7 +35,7 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
     let requestData: unknown;
 
     if (this.method === 'POST') {
-      requestData = jsonifyValidJSONString(this.requestData);
+      requestData = jsonifyIfPossible(this.requestData);
     } else {
       requestData = convertSearchParamsToJSON(this.url);
     }
@@ -50,21 +50,21 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
       responseType: this.responseType,
       response: this.response,
       responseURL: this.responseURL,
-      responseJSON: jsonifyValidJSONString(this.response),
+      responseJSON: jsonifyIfPossible(this.response),
       responseHeaders,
       status: this.status,
       statusText: this.statusText,
       contentType: responseHeaders['content-type'],
     };
 
+    // if response is not to be overridden, do not wait for interceptor to finish execution
     if (!overrideResponse) {
-      // do not wait for interceptor to finish execution
       if (this.response instanceof Blob) {
         this.response.text().then((responseText) => {
           interceptor({
             ...interceptorArgs,
             response: responseText,
-            responseJSON: jsonifyValidJSONString(responseText),
+            responseJSON: jsonifyIfPossible(responseText),
           });
         });
       } else {
@@ -88,7 +88,7 @@ const onReadyStateChange = async function (this: XMLHttpRequestWithMeta): Promis
             return customResponse.body;
           }
 
-          return jsonifyValidJSONString(customResponse.body);
+          return jsonifyIfPossible(customResponse.body);
         }
 
         return customResponse.body;

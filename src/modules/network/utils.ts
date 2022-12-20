@@ -6,18 +6,28 @@ export const getAbsoluteUrl = (url: string): string => {
   return dummyLink.href;
 };
 
-export const jsonifyValidJSONString = (mightBeJSONString: unknown): unknown => {
-  if (typeof mightBeJSONString !== 'string') {
-    return mightBeJSONString;
+export const jsonifyIfPossible = (value: unknown): unknown => {
+  let jsonString: string;
+
+  if (!value) {
+    return value;
+  }
+
+  if (value instanceof FormData) {
+    jsonString = JSON.stringify(Object.fromEntries(value));
+  } else if ((value as Buffer).buffer instanceof ArrayBuffer) {
+    jsonString = new TextDecoder().decode((value as Buffer).buffer);
+  } else if (typeof value !== 'string') {
+    jsonString = JSON.stringify(value);
   }
 
   try {
-    return JSON.parse(mightBeJSONString);
+    return JSON.parse(jsonString);
   } catch (e) {
     /* Do Nothing. Unable to parse the param value */
   }
 
-  return mightBeJSONString;
+  return value;
 };
 
 export const convertSearchParamsToJSON = (url: string): Record<string, unknown> => {
@@ -30,7 +40,7 @@ export const convertSearchParamsToJSON = (url: string): Record<string, unknown> 
   const paramsObject = Object.fromEntries(new URL(url).searchParams);
 
   Object.entries(paramsObject).forEach(([paramName, paramValue]) => {
-    result[paramName] = jsonifyValidJSONString(paramValue);
+    result[paramName] = jsonifyIfPossible(paramValue);
   });
 
   return result;

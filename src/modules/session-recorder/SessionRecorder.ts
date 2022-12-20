@@ -152,13 +152,13 @@ export class SessionRecorder {
 
     Network.intercept(
       /.*/,
-      ({ method, url, requestData, response, responseURL, contentType, status, statusText, responseTime }) => {
+      ({ method, url, requestData, responseJSON, responseURL, contentType, status, statusText, responseTime }) => {
         captureEventFn({
           timestamp: Date.now(),
           method,
           url,
           requestData,
-          response: JSON.parse(JSON.stringify(response)),
+          response: responseJSON,
           responseURL,
           contentType,
           status,

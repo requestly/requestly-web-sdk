@@ -5,7 +5,7 @@ import {
   getAbsoluteUrl,
   getCustomResponse,
   isJsonResponse,
-  jsonifyValidJSONString,
+  jsonifyIfPossible,
   parseHeaders,
 } from '../utils';
 
@@ -20,14 +20,14 @@ const getInterceptorArgs = async (
   let requestData: unknown;
 
   if (method === 'POST') {
-    requestData = jsonifyValidJSONString(await request.text());
+    requestData = jsonifyIfPossible(await request.text());
   } else {
     requestData = convertSearchParamsToJSON(url);
   }
 
   const responseData = await response.text();
   const responseHeaders = parseHeaders(response.headers);
-  const responseDataAsJson = jsonifyValidJSONString(responseData);
+  const responseDataAsJson = jsonifyIfPossible(responseData);
 
   return {
     api: ApiType.FETCH,
