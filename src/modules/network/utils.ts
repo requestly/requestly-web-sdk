@@ -7,24 +7,24 @@ export const getAbsoluteUrl = (url: string): string => {
 };
 
 export const jsonifyIfPossible = (value: unknown): unknown => {
-  let jsonString: string;
-
   if (!value) {
     return value;
   }
 
-  if (value instanceof FormData) {
-    jsonString = JSON.stringify(Object.fromEntries(value));
-  } else if ((value as Buffer).buffer instanceof ArrayBuffer) {
-    jsonString = new TextDecoder().decode((value as Buffer).buffer);
-  } else if (typeof value !== 'string') {
-    jsonString = JSON.stringify(value);
-  }
-
   try {
+    let jsonString: string;
+
+    if (value instanceof FormData) {
+      jsonString = JSON.stringify(Object.fromEntries(value));
+    } else if ((value as Buffer).buffer instanceof ArrayBuffer) {
+      jsonString = new TextDecoder().decode((value as Buffer).buffer);
+    } else if (typeof value !== 'string') {
+      jsonString = JSON.stringify(value);
+    }
+
     return JSON.parse(jsonString);
   } catch (e) {
-    /* Do Nothing. Unable to parse the param value */
+    // no-op
   }
 
   return value;
