@@ -1,4 +1,4 @@
-import { eventWithTime } from 'rrweb/typings/types';
+import { eventWithTime } from '@rrweb/types';
 
 export interface Environment {
   userAgent: string;
