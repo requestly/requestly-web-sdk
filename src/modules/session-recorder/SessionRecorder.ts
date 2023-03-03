@@ -74,7 +74,6 @@ export class SessionRecorder {
           plugins,
           recordAfter: 'DOMContentLoaded',
           recordCrossOriginIframes: true,
-          recordCanvas: true,
           emit: (event) => {
             if (event.type === EventType.Plugin && event.data.plugin === CONSOLE_PLUGIN) {
               this.#relayEventToTopDocument(RQSessionEventType.RRWEB, event);
@@ -95,7 +94,6 @@ export class SessionRecorder {
       plugins,
       recordAfter: 'DOMContentLoaded',
       recordCrossOriginIframes: true,
-      recordCanvas: true,
       checkoutEveryNms: this.#options.maxDuration,
       emit: (event, isCheckout) => {
         if (isCheckout) {
