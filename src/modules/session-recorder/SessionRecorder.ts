@@ -1,4 +1,4 @@
-import { record, getRecordConsolePlugin, PLUGIN_NAME as CONSOLE_PLUGIN, EventType } from 'rrweb';
+import { record, getRecordConsolePlugin, PLUGIN_NAME as CONSOLE_PLUGIN, EventType, recordOptions } from 'rrweb';
 import {
   Environment,
   NetworkEventData,
@@ -67,13 +67,18 @@ export class SessionRecorder {
       plugins.push(getRecordConsolePlugin());
     }
 
+    const commonRrwebOptions: Partial<recordOptions<unknown>> = {
+      recordAfter: 'DOMContentLoaded',
+      recordCrossOriginIframes: true,
+      blockClass: 'rq-element',
+    };
+
     if (this.#options.relayEventsToTop) {
       if (this.#isCrossDomainFrame()) {
         // RRWeb already handles events for same domain frames
         this.#stopRecording = record({
           plugins,
-          recordAfter: 'DOMContentLoaded',
-          recordCrossOriginIframes: true,
+          ...commonRrwebOptions,
           emit: (event) => {
             if (event.type === EventType.Plugin && event.data.plugin === CONSOLE_PLUGIN) {
               this.#relayEventToTopDocument(RQSessionEventType.RRWEB, event);
@@ -92,8 +97,7 @@ export class SessionRecorder {
     this.#lastTwoSessionEvents = [this.#getEmptySessionEvents(), this.#getEmptySessionEvents()];
     this.#stopRecording = record({
       plugins,
-      recordAfter: 'DOMContentLoaded',
-      recordCrossOriginIframes: true,
+      ...commonRrwebOptions,
       checkoutEveryNms: this.#options.maxDuration,
       emit: (event, isCheckout) => {
         if (isCheckout) {
