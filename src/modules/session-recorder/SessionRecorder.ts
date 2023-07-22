@@ -13,6 +13,7 @@ import { Network } from '../network';
 
 const POST_MESSAGE_SOURCE = 'requestly:websdk:sessionRecorder';
 const RELAY_EVENT_MESSAGE_ACTION = 'relayEventToTopDocument';
+const DEFAULT_MAX_DURATION = 5 * 60 * 1000;
 
 interface RelayEventMessagePayload {
   eventType: RQSessionEventType;
@@ -25,6 +26,7 @@ export interface SessionRecorderOptions {
   console?: boolean;
   network?: boolean;
   relayEventsToTop?: boolean;
+  previousSession?: RQSession;
 }
 
 export class SessionRecorder {
@@ -37,7 +39,7 @@ export class SessionRecorder {
   constructor(options: SessionRecorderOptions) {
     this.#options = {
       ...options,
-      maxDuration: options.maxDuration || 10 * 60 * 1000,
+      maxDuration: options.maxDuration ?? DEFAULT_MAX_DURATION,
       relayEventsToTop: options.relayEventsToTop && window.top !== window,
     };
     this.#url = window.location.href;
@@ -94,7 +96,8 @@ export class SessionRecorder {
       return;
     }
 
-    this.#lastTwoSessionEvents = [this.#getEmptySessionEvents(), this.#getEmptySessionEvents()];
+    const lastSessionEvents = this.#options.previousSession?.events ?? this.#getEmptySessionEvents();
+    this.#lastTwoSessionEvents = [this.#getEmptySessionEvents(), lastSessionEvents];
     this.#stopRecording = record({
       plugins,
       ...commonRrwebOptions,
@@ -144,10 +147,10 @@ export class SessionRecorder {
 
     return {
       attributes: {
-        url: this.#url,
+        url: this.#options.previousSession?.attributes.url ?? this.#url,
         startTime: firstEventTime,
         duration: lastEventTime - firstEventTime,
-        environment: this.#environment,
+        environment: this.#options.previousSession?.attributes.environment ?? this.#environment,
       },
       events,
     };
