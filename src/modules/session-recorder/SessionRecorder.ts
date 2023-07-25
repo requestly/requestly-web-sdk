@@ -104,16 +104,15 @@ export class SessionRecorder {
       checkoutEveryNms: this.#options.maxDuration,
       emit: (event, isCheckout) => {
         if (isCheckout) {
-          let previousSessionEvents = this.#lastTwoSessionEvents[1];
-          const previousSessionRRWebEvents = previousSessionEvents[RQSessionEventType.RRWEB];
-          const timeElapsedSinceStart = event.timestamp - previousSessionRRWebEvents[0].timestamp;
-
+          const previousSessionEvents = this.#lastTwoSessionEvents[1];
+          const previousSessionRRWebEvents = previousSessionEvents[exports.RQSessionEventType.RRWEB];
+          const timeElapsedInBucket =
+            previousSessionRRWebEvents[previousSessionRRWebEvents.length - 1].timestamp -
+            previousSessionRRWebEvents[0].timestamp;
           // final session duration should be between T and 2T where T is maxDuration
-          if (timeElapsedSinceStart >= 2 * this.#options.maxDuration) {
-            previousSessionEvents = this.#getEmptySessionEvents();
+          if (timeElapsedInBucket > this.#options.maxDuration) {
+            this.#lastTwoSessionEvents = [previousSessionEvents, this.#getEmptySessionEvents()];
           }
-
-          this.#lastTwoSessionEvents = [previousSessionEvents, this.#getEmptySessionEvents()];
         }
 
         this.#addEvent(RQSessionEventType.RRWEB, event);
