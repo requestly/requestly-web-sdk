@@ -1,4 +1,4 @@
-import { eventWithTime } from '@rrweb/types';
+import { eventWithTime, EventType } from '@rrweb/types';
 
 export interface Environment {
   userAgent: string;
@@ -42,6 +42,7 @@ export enum RQSessionEventType {
 
 export type CommonEventData = {
   frameUrl?: string;
+  type?: EventType;
 };
 
 export type RRWebEventData = CommonEventData & eventWithTime;

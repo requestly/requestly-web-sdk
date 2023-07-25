@@ -182,7 +182,15 @@ export class SessionRecorder {
   }
 
   #addEvent(eventType: RQSessionEventType, event: RQSessionEvent): void {
-    this.#lastTwoSessionEvents[1]?.[eventType]?.push(event);
+    // DOMContentLoaded events sometimes come out of order
+    if (event.type === EventType.DomContentLoaded) {
+      const insertIndex = this.#lastTwoSessionEvents[1]?.[eventType]?.findIndex(
+        (arrayEvent) => event.timestamp < arrayEvent.timestamp,
+      );
+      this.#lastTwoSessionEvents[1]?.[eventType]?.splice(insertIndex, 0, event);
+    } else {
+      this.#lastTwoSessionEvents[1]?.[eventType]?.push(event);
+    }
   }
 
   #isCrossDomainFrame(): boolean {
