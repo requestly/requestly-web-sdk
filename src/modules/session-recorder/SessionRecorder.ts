@@ -106,12 +106,14 @@ export class SessionRecorder {
         if (isCheckout) {
           const previousSessionEvents = this.#lastTwoSessionEvents[1];
           const previousSessionRRWebEvents = previousSessionEvents[exports.RQSessionEventType.RRWEB];
-          const timeElapsedInBucket =
-            previousSessionRRWebEvents[previousSessionRRWebEvents.length - 1].timestamp -
-            previousSessionRRWebEvents[0].timestamp;
-          // final session duration should be between T and 2T where T is maxDuration
-          if (timeElapsedInBucket > this.#options.maxDuration) {
-            this.#lastTwoSessionEvents = [previousSessionEvents, this.#getEmptySessionEvents()];
+          if (previousSessionRRWebEvents.length > 1) {
+            const timeElapsedInBucket =
+              previousSessionRRWebEvents[previousSessionRRWebEvents.length - 1].timestamp -
+              previousSessionRRWebEvents[0].timestamp;
+            // final session duration should be between T and 2T where T is maxDuration
+            if (timeElapsedInBucket >= this.#options.maxDuration) {
+              this.#lastTwoSessionEvents = [previousSessionEvents, this.#getEmptySessionEvents()];
+            }
           }
         }
 
