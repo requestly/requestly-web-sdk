@@ -191,7 +191,7 @@ export class SessionRecorder {
         return;
       }
     }
-    this.#lastTwoSessionEvents[1]?.[eventType]?.push(event);
+    previousSessionEvents?.push(event);
   }
 
   #isCrossDomainFrame(): boolean {
