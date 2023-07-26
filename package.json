@@ -1,6 +1,6 @@
 {
   "name": "@requestly/web-sdk",
-  "version": "0.13.1",
+  "version": "0.14.0",
   "description": "Requestly Web SDK",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
