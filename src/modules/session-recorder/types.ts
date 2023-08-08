@@ -58,6 +58,7 @@ export type NetworkEventData = CommonEventData & {
   status: number;
   statusText?: string;
   responseTime?: number;
+  rqNetworkEventErrorCodes?: RQNetworkEventErrorCodes[];
 };
 
 export interface RQSessionEventDataType {
@@ -74,4 +75,9 @@ export type RQSessionEvents = {
 export interface RQSession {
   attributes: RQSessionAttributes;
   events: RQSessionEvents;
+}
+
+export enum RQNetworkEventErrorCodes {
+  REQUEST_TOO_LARGE = 101,
+  RESPONSE_TOO_LARGE = 102,
 }
