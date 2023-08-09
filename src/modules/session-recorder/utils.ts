@@ -14,7 +14,7 @@ export const getObjectSizeInBytes = (obj): number => {
       stringifiedObj = JSON.stringify(obj);
     }
   } catch (e) {
-    // skip
+    return NaN;
   }
 
   const size = stringifiedObj.length;

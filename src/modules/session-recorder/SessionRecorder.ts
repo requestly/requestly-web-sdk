@@ -171,25 +171,20 @@ export class SessionRecorder {
     Network.intercept(
       /.*/,
       ({ method, url, requestData, responseJSON, responseURL, contentType, status, statusText, responseTime }) => {
-        const {
-          response,
-          requestData: filteredRequestData,
-          errors,
-        } = this.#filterOutLargeNetworkValues(responseJSON, requestData, contentType);
-
-        captureEventFn({
-          timestamp: Date.now(),
-          method,
-          url,
-          requestData: filteredRequestData,
-          response: response,
-          responseURL,
-          contentType,
-          status,
-          statusText,
-          responseTime,
-          errors,
-        });
+        captureEventFn(
+          this.#filterOutLargeNetworkValues({
+            timestamp: Date.now(),
+            method,
+            url,
+            requestData,
+            response: responseJSON,
+            responseURL,
+            contentType,
+            status,
+            statusText,
+            responseTime,
+          }),
+        );
       },
     );
   }
@@ -264,30 +259,26 @@ export class SessionRecorder {
     );
   }
 
-  #filterOutLargeNetworkValues(responseBody, requestBody, contentType: string): Partial<NetworkEventData> {
-    const payloadValues = {
-      response: responseBody,
-      requestData: requestBody,
-      errors: [],
-    };
+  #filterOutLargeNetworkValues(networkEventData: NetworkEventData): NetworkEventData {
+    const errors: RQNetworkEventErrorCodes[] = [];
 
-    if (this.#options.ignoreMediaResponse && isMediaRequest(contentType)) {
-      payloadValues.response = '';
+    if (this.#options.ignoreMediaResponse && isMediaRequest(networkEventData.contentType)) {
+      networkEventData.response = '';
     } else {
-      const responseBodySize = getObjectSizeInBytes(payloadValues.response);
-      const requestDataSize = getObjectSizeInBytes(payloadValues.requestData);
+      const responseBodySize = getObjectSizeInBytes(networkEventData.response);
 
       if (responseBodySize > this.#options.maxPayloadSize) {
-        payloadValues.response = '';
-        payloadValues.errors.push(RQNetworkEventErrorCodes.RESPONSE_TOO_LARGE);
-      }
-
-      if (requestDataSize > this.#options.maxPayloadSize) {
-        payloadValues.requestData = '';
-        payloadValues.errors.push(RQNetworkEventErrorCodes.REQUEST_TOO_LARGE);
+        networkEventData.response = '';
+        errors.push(RQNetworkEventErrorCodes.RESPONSE_TOO_LARGE);
       }
     }
 
-    return payloadValues;
+    const requestDataSize = getObjectSizeInBytes(networkEventData.requestData);
+    if (requestDataSize > this.#options.maxPayloadSize) {
+      networkEventData.requestData = '';
+      errors.push(RQNetworkEventErrorCodes.REQUEST_TOO_LARGE);
+    }
+
+    return { ...networkEventData, errors };
   }
 }
