@@ -58,7 +58,7 @@ export type NetworkEventData = CommonEventData & {
   status: number;
   statusText?: string;
   responseTime?: number;
-  rqNetworkEventErrorCodes?: RQNetworkEventErrorCodes[];
+  errors?: RQNetworkEventErrorCodes[];
 };
 
 export interface RQSessionEventDataType {

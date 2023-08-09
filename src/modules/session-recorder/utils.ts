@@ -17,6 +17,6 @@ export const getObjectSizeInBytes = (obj): number => {
     // skip
   }
 
-  const size = new TextEncoder().encode(stringifiedObj).length;
+  const size = stringifiedObj.length;
   return size;
 };
