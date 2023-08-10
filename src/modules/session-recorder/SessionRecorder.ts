@@ -2,6 +2,7 @@ import { record, getRecordConsolePlugin, PLUGIN_NAME as CONSOLE_PLUGIN, EventTyp
 import {
   Environment,
   NetworkEventData,
+  RQNetworkEventErrorCodes,
   RQSession,
   RQSessionEvent,
   RQSessionEvents,
@@ -10,6 +11,7 @@ import {
 } from './types';
 import Bowser from 'bowser';
 import { Network } from '../network';
+import { getObjectSizeInBytes, isMediaRequest } from './utils';
 
 const POST_MESSAGE_SOURCE = 'requestly:websdk:sessionRecorder';
 const RELAY_EVENT_MESSAGE_ACTION = 'relayEventToTopDocument';
@@ -27,6 +29,8 @@ export interface SessionRecorderOptions {
   network?: boolean;
   relayEventsToTop?: boolean;
   previousSession?: RQSession;
+  ignoreMediaResponse?: boolean;
+  maxPayloadSize?: number; // in Bytes
 }
 
 export class SessionRecorder {
@@ -41,6 +45,8 @@ export class SessionRecorder {
       ...options,
       maxDuration: options.maxDuration ?? DEFAULT_MAX_DURATION,
       relayEventsToTop: options.relayEventsToTop && window.top !== window,
+      ignoreMediaResponse: options.ignoreMediaResponse ?? true,
+      maxPayloadSize: options.maxPayloadSize ?? 100 * 1024, // 100KB max payload size of any request/response
     };
     this.#url = window.location.href;
 
@@ -165,18 +171,20 @@ export class SessionRecorder {
     Network.intercept(
       /.*/,
       ({ method, url, requestData, responseJSON, responseURL, contentType, status, statusText, responseTime }) => {
-        captureEventFn({
-          timestamp: Date.now(),
-          method,
-          url,
-          requestData,
-          response: responseJSON,
-          responseURL,
-          contentType,
-          status,
-          statusText,
-          responseTime,
-        });
+        captureEventFn(
+          this.#filterOutLargeNetworkValues({
+            timestamp: Date.now(),
+            method,
+            url,
+            requestData,
+            response: responseJSON,
+            responseURL,
+            contentType,
+            status,
+            statusText,
+            responseTime,
+          }),
+        );
       },
     );
   }
@@ -249,5 +257,28 @@ export class SessionRecorder {
       },
       '*',
     );
+  }
+
+  #filterOutLargeNetworkValues(networkEventData: NetworkEventData): NetworkEventData {
+    const errors: RQNetworkEventErrorCodes[] = [];
+
+    if (this.#options.ignoreMediaResponse && isMediaRequest(networkEventData.contentType)) {
+      networkEventData.response = '';
+    } else {
+      const responseBodySize = getObjectSizeInBytes(networkEventData.response);
+
+      if (responseBodySize > this.#options.maxPayloadSize) {
+        networkEventData.response = '';
+        errors.push(RQNetworkEventErrorCodes.RESPONSE_TOO_LARGE);
+      }
+    }
+
+    const requestDataSize = getObjectSizeInBytes(networkEventData.requestData);
+    if (requestDataSize > this.#options.maxPayloadSize) {
+      networkEventData.requestData = '';
+      errors.push(RQNetworkEventErrorCodes.REQUEST_TOO_LARGE);
+    }
+
+    return { ...networkEventData, errors };
   }
 }

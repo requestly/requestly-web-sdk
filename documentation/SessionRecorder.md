@@ -7,6 +7,9 @@ const sessionRecorder = new Requestly.SessionRecorder({
   network: true, // should record network API requests, default=false
   maxDuration: 5 * 60 * 1000, // last `maxDuration` milliseconds of session should only be recorded, default=5mins
   relayEventsToTop: false, // if this is an iframe, should relay events to the top document, default=false
+  previousSession: RQSession // the cached session details if any
+  ignoreMediaResponse: true // should drop the payload of media request, default=true
+  maxPayloadSize: 100 * 1024 // requests/response payload greater than this would be dropped, default=100KB
 });
 
 // Start sessionRecorder
