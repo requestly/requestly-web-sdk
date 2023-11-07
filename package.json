@@ -15,7 +15,8 @@
     "type-check": "tsc --noEmit --pretty",
     "precommit": "npm run type-check && npm run lint:fix",
     "version": "npm run build && git add .",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "postinstall": "patch-package"
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-prettier": "^4.0.0",
     "husky": "^8.0.1",
+    "patch-package": "^8.0.0",
     "prettier": "^2.6.2",
     "rollup": "^2.73.0",
     "rollup-plugin-bundle-size": "^1.0.3",
@@ -52,6 +54,6 @@
   },
   "dependencies": {
     "bowser": "^2.11.0",
-    "rrweb": "^2.0.0-alpha.9"
+    "rrweb": "2.0.0-alpha.11"
   }
 }
