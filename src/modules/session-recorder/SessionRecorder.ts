@@ -8,6 +8,7 @@ import {
   RQSessionEvents,
   RQSessionEventType,
   RRWebEventData,
+  StorageEventData,
 } from './types';
 import Bowser from 'bowser';
 import { Network } from '../network';
@@ -130,13 +131,18 @@ export class SessionRecorder {
     this.#interceptNetworkRequests((event) => {
       this.#addEvent(RQSessionEventType.NETWORK, event);
     });
+
+    this.#captureInitialLocalStorageDump();
+    this.#startCapturingLocalStorage();
   }
 
   stop(): void {
     this.#stopRecording?.();
     this.#stopRecording = null;
     Network.clearInterceptors();
+    this.#stopCapturingLocalStorage();
   }
+
 
   getSession(): RQSession {
     if (this.#options.relayEventsToTop) {
@@ -281,4 +287,41 @@ export class SessionRecorder {
 
     return { ...networkEventData, errors };
   }
+
+  #captureInitialLocalStorageDump(): void {
+    const localStorageKeys = Object.keys(localStorage);
+    localStorageKeys.forEach((key) => {
+      const value = localStorage?.getItem(key);
+      const storageEvent: StorageEventData = {
+        timestamp: Date.now(),
+        key,
+        value,
+        eventType: "initialStorageValue",
+        };
+        console.log("storageEvent", storageEvent);
+        this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
+    });
+  }
+
+  #startCapturingLocalStorage(): void {
+    window.addEventListener('storage', this.#captureStorageEvent);
+  }
+
+  #stopCapturingLocalStorage(): void {
+    window.removeEventListener('storage', this.#captureStorageEvent);
+  }
+
+  #captureStorageEvent = (event: StorageEvent): void => {
+    if (event.storageArea === localStorage) {
+      const storageEvent: StorageEventData = {
+        timestamp: Date.now(),
+        key: event.key,
+        eventType: "keyUpdate",
+        oldValue: event.oldValue,
+        newValue: event.newValue,
+      };
+      this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
+    }
+  };
 }
+

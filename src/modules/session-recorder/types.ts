@@ -38,6 +38,7 @@ export interface RQSessionAttributes {
 export enum RQSessionEventType {
   RRWEB = 'rrweb',
   NETWORK = 'network',
+  STORAGE = 'storage',
 }
 
 export type CommonEventData = {
@@ -61,9 +62,26 @@ export type NetworkEventData = CommonEventData & {
   errors?: RQNetworkEventErrorCodes[];
 };
 
+export type StorageEventData = CommonEventData & {
+  timestamp: number;
+  key: string;
+} & (
+  | {
+    eventType: 'initialStorageValue';
+      value: string | null;
+    }
+  | {
+      eventType: 'keyUpdate';
+      oldValue: string | null;
+      newValue: string | null;
+    }
+);
+
+
 export interface RQSessionEventDataType {
   [RQSessionEventType.RRWEB]: RRWebEventData;
   [RQSessionEventType.NETWORK]: NetworkEventData;
+  [RQSessionEventType.STORAGE]: StorageEventData; 
 }
 
 export type RQSessionEvent = RQSessionEventDataType[RQSessionEventType];
