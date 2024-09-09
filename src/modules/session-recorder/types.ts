@@ -1,4 +1,5 @@
 import { eventWithTime, EventType } from '@rrweb/types';
+import { StorageEventData } from '../storage';
 
 export interface Environment {
   userAgent: string;
@@ -61,21 +62,6 @@ export type NetworkEventData = CommonEventData & {
   responseTime?: number;
   errors?: RQNetworkEventErrorCodes[];
 };
-
-export type StorageEventData = CommonEventData & {
-  timestamp: number;
-  key: string;
-} & (
-  | {
-    eventType: 'initialStorageValue';
-      value: string | null;
-    }
-  | {
-      eventType: 'keyUpdate';
-      oldValue: string | null;
-      newValue: string | null;
-    }
-);
 
 
 export interface RQSessionEventDataType {

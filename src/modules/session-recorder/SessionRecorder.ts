@@ -8,11 +8,12 @@ import {
   RQSessionEvents,
   RQSessionEventType,
   RRWebEventData,
-  StorageEventData,
 } from './types';
+import { StorageEventData } from '../storage';
 import Bowser from 'bowser';
 import { Network } from '../network';
 import { getObjectSizeInBytes, isMediaRequest } from './utils';
+import { Storage, StorageType } from '../storage';
 
 const POST_MESSAGE_SOURCE = 'requestly:websdk:sessionRecorder';
 const RELAY_EVENT_MESSAGE_ACTION = 'relayEventToTopDocument';
@@ -32,6 +33,8 @@ export interface SessionRecorderOptions {
   previousSession?: RQSession;
   ignoreMediaResponse?: boolean;
   maxPayloadSize?: number; // in Bytes
+  localStorage?: boolean;
+  sessionStorage?: boolean;
 }
 
 export class SessionRecorder {
@@ -48,6 +51,8 @@ export class SessionRecorder {
       relayEventsToTop: options.relayEventsToTop && window.top !== window,
       ignoreMediaResponse: options.ignoreMediaResponse ?? true,
       maxPayloadSize: options.maxPayloadSize ?? 100 * 1024, // 100KB max payload size of any request/response
+      localStorage: options.localStorage ?? true,
+      sessionStorage: options.sessionStorage ?? false,
     };
     this.#url = window.location.href;
 
@@ -132,15 +137,30 @@ export class SessionRecorder {
       this.#addEvent(RQSessionEventType.NETWORK, event);
     });
 
-    this.#captureInitialLocalStorageDump();
-    this.#startCapturingLocalStorage();
+    if (this.#options.localStorage || this.#options.sessionStorage) {
+      if (this.#options.localStorage) {
+        Storage.addListener(this.#handleStorageEvent, StorageType.LOCAL);
+      }
+      if (this.#options.sessionStorage) {
+        Storage.addListener(this.#handleStorageEvent, StorageType.SESSION);
+      }
+      Storage.initStorageCapture(true, this.#options.localStorage, this.#options.sessionStorage);
+    }
   }
 
   stop(): void {
     this.#stopRecording?.();
     this.#stopRecording = null;
     Network.clearInterceptors();
-    this.#stopCapturingLocalStorage();
+    if (this.#options.localStorage || this.#options.sessionStorage) {
+      if (this.#options.localStorage) {
+        Storage.removeListener(StorageType.LOCAL);
+      }
+      if (this.#options.sessionStorage) {
+        Storage.removeListener(StorageType.SESSION);
+      }
+      Storage.stopStorageCapture();
+    }
   }
 
 
@@ -288,40 +308,44 @@ export class SessionRecorder {
     return { ...networkEventData, errors };
   }
 
-  #captureInitialLocalStorageDump(): void {
-    const localStorageKeys = Object.keys(localStorage);
-    localStorageKeys.forEach((key) => {
-      const value = localStorage?.getItem(key);
-      const storageEvent: StorageEventData = {
-        timestamp: Date.now(),
-        key,
-        value,
-        eventType: "initialStorageValue",
-        };
-        console.log("storageEvent", storageEvent);
-        this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
-    });
-  }
-
-  #startCapturingLocalStorage(): void {
-    window.addEventListener('storage', this.#captureStorageEvent);
-  }
-
-  #stopCapturingLocalStorage(): void {
-    window.removeEventListener('storage', this.#captureStorageEvent);
-  }
-
-  #captureStorageEvent = (event: StorageEvent): void => {
-    if (event.storageArea === localStorage) {
-      const storageEvent: StorageEventData = {
-        timestamp: Date.now(),
-        key: event.key,
-        eventType: "keyUpdate",
-        oldValue: event.oldValue,
-        newValue: event.newValue,
-      };
-      this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
-    }
+  #handleStorageEvent = (event: StorageEventData): void => {
+    this.#addEvent(RQSessionEventType.STORAGE, event);
   };
+
+  // #captureInitialLocalStorageDump(): void {
+  //   const localStorageKeys = Object.keys(localStorage);
+  //   localStorageKeys.forEach((key) => {
+  //     const value = localStorage?.getItem(key);
+  //     const storageEvent: StorageEventData = {
+  //       timestamp: Date.now(),
+  //       key,
+  //       value,
+  //       eventType: "initialStorageValue",
+  //       };
+  //       console.log("storageEvent", storageEvent);
+  //       this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
+  //   });
+  // }
+
+  // #startCapturingLocalStorage(): void {
+  //   window.addEventListener('storage', this.#captureStorageEvent);
+  // }
+
+  // #stopCapturingLocalStorage(): void {
+  //   window.removeEventListener('storage', this.#captureStorageEvent);
+  // }
+
+  // #captureStorageEvent = (event: StorageEvent): void => {
+  //   if (event.storageArea === localStorage) {
+  //     const storageEvent: StorageEventData = {
+  //       timestamp: Date.now(),
+  //       key: event.key,
+  //       eventType: "keyUpdate",
+  //       oldValue: event.oldValue,
+  //       newValue: event.newValue,
+  //     };
+  //     this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
+  //   }
+  // };
 }
 
