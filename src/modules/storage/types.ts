@@ -10,18 +10,22 @@ export enum StorageEventType {
   KEY_UPDATE = 'keyUpdate',
 }
 
-export type StorageEventData = CommonEventData & {
+interface BaseStorageEventData extends CommonEventData {
   timestamp: number;
   key: string;
   storageType: StorageType;
-} & (
-    | {
-        eventType: StorageEventType.INITIAL_STORAGE_VALUE;
-        value: string | null;
-      }
-    | {
-        eventType: StorageEventType.KEY_UPDATE;
-        oldValue: string | null;
-        newValue: string | null;
-      }
-  );
+}
+
+interface InitialStorageValueEvent extends BaseStorageEventData {
+  eventType: StorageEventType.INITIAL_STORAGE_VALUE;
+  value: string | null;
+}
+
+interface KeyUpdateEvent extends BaseStorageEventData {
+  eventType: StorageEventType.KEY_UPDATE;
+  oldValue: string | null;
+  newValue: string | null;
+}
+
+export type StorageEventData = InitialStorageValueEvent | KeyUpdateEvent;
+export type StorageListener = ((event: StorageEventData) => void) | null;

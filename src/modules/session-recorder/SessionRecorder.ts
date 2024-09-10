@@ -137,30 +137,19 @@ export class SessionRecorder {
       this.#addEvent(RQSessionEventType.NETWORK, event);
     });
 
-    if (this.#options.localStorage || this.#options.sessionStorage) {
       if (this.#options.localStorage) {
-        Storage.addListener(this.#handleStorageEvent, StorageType.LOCAL);
+        Storage.startCapturingStorage(StorageType.LOCAL, this.#handleStorageEvent);
       }
       if (this.#options.sessionStorage) {
-        Storage.addListener(this.#handleStorageEvent, StorageType.SESSION);
+        Storage.startCapturingStorage(StorageType.SESSION, this.#handleStorageEvent);
       }
-      Storage.initStorageCapture(true, this.#options.localStorage, this.#options.sessionStorage);
-    }
   }
 
   stop(): void {
     this.#stopRecording?.();
     this.#stopRecording = null;
     Network.clearInterceptors();
-    if (this.#options.localStorage || this.#options.sessionStorage) {
-      if (this.#options.localStorage) {
-        Storage.removeListener(StorageType.LOCAL);
-      }
-      if (this.#options.sessionStorage) {
-        Storage.removeListener(StorageType.SESSION);
-      }
-      Storage.stopStorageCapture();
-    }
+    Storage.stopCapturingStorage()
   }
 
   getSession(): RQSession {
@@ -217,7 +206,7 @@ export class SessionRecorder {
   #addEvent(eventType: RQSessionEventType, event: RQSessionEvent): void {
     const previousSessionEvents = this.#lastTwoSessionEvents[1]?.[eventType];
     // DOMContentLoaded events sometimes come out of order
-    if (event.type === EventType.DomContentLoaded) {
+    if (event && event.type === EventType.DomContentLoaded) {
       const insertIndex = previousSessionEvents?.findIndex((arrayEvent) => event.timestamp < arrayEvent.timestamp);
       if (insertIndex > -1) {
         previousSessionEvents?.splice(insertIndex, 0, event);
@@ -310,40 +299,4 @@ export class SessionRecorder {
   #handleStorageEvent = (event: StorageEventData): void => {
     this.#addEvent(RQSessionEventType.STORAGE, event);
   };
-
-  // #captureInitialLocalStorageDump(): void {
-  //   const localStorageKeys = Object.keys(localStorage);
-  //   localStorageKeys.forEach((key) => {
-  //     const value = localStorage?.getItem(key);
-  //     const storageEvent: StorageEventData = {
-  //       timestamp: Date.now(),
-  //       key,
-  //       value,
-  //       eventType: "initialStorageValue",
-  //       };
-  //       console.log("storageEvent", storageEvent);
-  //       this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
-  //   });
-  // }
-
-  // #startCapturingLocalStorage(): void {
-  //   window.addEventListener('storage', this.#captureStorageEvent);
-  // }
-
-  // #stopCapturingLocalStorage(): void {
-  //   window.removeEventListener('storage', this.#captureStorageEvent);
-  // }
-
-  // #captureStorageEvent = (event: StorageEvent): void => {
-  //   if (event.storageArea === localStorage) {
-  //     const storageEvent: StorageEventData = {
-  //       timestamp: Date.now(),
-  //       key: event.key,
-  //       eventType: "keyUpdate",
-  //       oldValue: event.oldValue,
-  //       newValue: event.newValue,
-  //     };
-  //     this.#addEvent(RQSessionEventType.STORAGE, storageEvent);
-  //   }
-  // };
 }

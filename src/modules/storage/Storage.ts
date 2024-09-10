@@ -1,37 +1,31 @@
-import { StorageEventData, StorageEventType, StorageType } from './types';
+import { StorageEventData, StorageEventType, StorageListener, StorageType } from './types';
 
 class StorageClass {
-  private storageListeners: {
-    [StorageType.LOCAL]: ((event: StorageEventData) => void) | null;
-    [StorageType.SESSION]: ((event: StorageEventData) => void) | null;
-  } = {
+  private storageListeners: Record<StorageType, StorageListener> = {
     [StorageType.LOCAL]: null,
     [StorageType.SESSION]: null,
   };
 
-  initStorageCapture(captureInitialDump = true, localStorage = false, sessionStorage = false): void {
-    if (localStorage || sessionStorage) {
-      if (captureInitialDump) {
-        if (localStorage) this.captureInitialStorageDump(StorageType.LOCAL);
-        if (sessionStorage) this.captureInitialStorageDump(StorageType.SESSION);
-      }
-      window.addEventListener('storage', this.captureStorageEvent);
-    }
+  initStorageCapture(storageType: StorageType): void {
+    this.captureInitialStorageDump(storageType);
+    window.addEventListener('storage', this.captureStorageEvent);
   }
 
-  stopStorageCapture(): void {
+  startCapturingStorage(storageType: StorageType, listener: (event: StorageEventData) => void): void {
+    this.storageListeners[storageType] = listener;
+    this.initStorageCapture(storageType);
+  }
+
+  stopCapturingStorage(): void {
+    this.storageListeners = {
+      [StorageType.LOCAL]: null,
+      [StorageType.SESSION]: null,
+    };
     window.removeEventListener('storage', this.captureStorageEvent);
   }
 
-  addListener(listener: (event: StorageEventData) => void, storageType: StorageType): void {
-    this.storageListeners[storageType] = listener;
-  }
-
-  removeListener(storageType: StorageType): void {
-    this.storageListeners[storageType] = null;
-  }
-
   private captureInitialStorageDump(storageType: StorageType): void {
+    console.log('captureInitialStorageDump', storageType);
     const storage = storageType === StorageType.LOCAL ? localStorage : sessionStorage;
     Object.keys(storage).forEach((key) => {
       const value = storage.getItem(key);
@@ -42,22 +36,21 @@ class StorageClass {
         eventType: StorageEventType.INITIAL_STORAGE_VALUE,
         storageType,
       };
+      console.log('captureInitialStorageDump', storageEvent);
       this.notifyListeners(storageEvent);
     });
   }
 
   private captureStorageEvent = (event: StorageEvent): void => {
-    if (event.storageArea === localStorage || event.storageArea === sessionStorage) {
-      const storageEvent: StorageEventData = {
-        timestamp: Date.now(),
-        key: event.key,
-        eventType: StorageEventType.KEY_UPDATE,
-        oldValue: event.oldValue,
-        newValue: event.newValue,
-        storageType: event.storageArea === localStorage ? StorageType.LOCAL : StorageType.SESSION,
-      };
-      this.notifyListeners(storageEvent);
-    }
+    const storageEvent: StorageEventData = {
+      timestamp: Date.now(),
+      key: event.key,
+      eventType: StorageEventType.KEY_UPDATE,
+      oldValue: event.oldValue,
+      newValue: event.newValue,
+      storageType: event.storageArea === localStorage ? StorageType.LOCAL : StorageType.SESSION,
+    };
+    this.notifyListeners(storageEvent);
   };
 
   private notifyListeners(event: StorageEventData): void {
