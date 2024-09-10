@@ -67,18 +67,21 @@ export interface RQSessionEventDataType {
   [RQSessionEventType.RRWEB]: RRWebEventData;
   [RQSessionEventType.NETWORK]: NetworkEventData;
   [RQSessionEventType.STORAGE]: {
-    [StorageType.LOCAL]: StorageEventData[];
-    [StorageType.SESSION]: StorageEventData[];
+    [StorageType.LOCAL]: StorageEventData;
+    [StorageType.SESSION]: StorageEventData;
   };
 }
 
-export type RQSessionEvent = RQSessionEventDataType[Exclude<RQSessionEventType, RQSessionEventType.STORAGE>];
-export type RQSessionStorageEvent = RQSessionEventDataType[RQSessionEventType.STORAGE];
+export type RQSessionEvent =
+  | RQSessionEventDataType[Exclude<RQSessionEventType, RQSessionEventType.STORAGE>]
+  | StorageEventData;
 
 export type RQSessionEvents = {
   [eventType in Exclude<RQSessionEventType, RQSessionEventType.STORAGE>]?: RQSessionEvent[];
 } & {
-  [RQSessionEventType.STORAGE]?: RQSessionStorageEvent;
+  [RQSessionEventType.STORAGE]?: {
+    [storageType in StorageType]?: RQSessionEvent[];
+  };
 };
 
 export interface RQSession {

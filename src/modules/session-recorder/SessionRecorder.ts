@@ -160,12 +160,14 @@ export class SessionRecorder {
     const events: RQSessionEvents = {};
     Object.values(RQSessionEventType).forEach((eventType) => {
       if (eventType === RQSessionEventType.STORAGE) {
-        events[eventType] = {
-          local: this.#lastTwoSessionEvents[0][eventType].local.concat(this.#lastTwoSessionEvents[1][eventType].local),
-          session: this.#lastTwoSessionEvents[0][eventType].session.concat(
-            this.#lastTwoSessionEvents[1][eventType].session,
+        events[RQSessionEventType.STORAGE] = {
+          [StorageType.LOCAL]: this.#lastTwoSessionEvents[0][RQSessionEventType.STORAGE][StorageType.LOCAL].concat(
+            this.#lastTwoSessionEvents[1][RQSessionEventType.STORAGE][StorageType.LOCAL],
           ),
         };
+        events[RQSessionEventType.STORAGE][StorageType.SESSION] = this.#lastTwoSessionEvents[0][
+          RQSessionEventType.STORAGE
+        ][StorageType.SESSION].concat(this.#lastTwoSessionEvents[1][RQSessionEventType.STORAGE][StorageType.SESSION]);
       } else {
         events[eventType] = this.#lastTwoSessionEvents[0][eventType].concat(this.#lastTwoSessionEvents[1][eventType]);
       }
@@ -213,27 +215,27 @@ export class SessionRecorder {
   }
 
   #addEvent(eventType: RQSessionEventType, event: RQSessionEvent): void {
-    const previousSessionEvents = this.#lastTwoSessionEvents[1]?.[eventType];
-    if (Array.isArray(previousSessionEvents)) {
-      if ('type' in event && event.type === EventType.DomContentLoaded && 'timestamp' in event) {
-        const insertIndex = previousSessionEvents.findIndex(
-          (arrayEvent) => 'timestamp' in arrayEvent && event.timestamp < arrayEvent.timestamp,
-        );
-        if (insertIndex > -1) {
-          previousSessionEvents.splice(insertIndex, 0, event);
-          return;
-        }
-      }
-      previousSessionEvents.push(event);
+    if (eventType === RQSessionEventType.STORAGE) {
+      this.#addStorageEvent(event as StorageEventData);
+      return;
     }
+
+    const previousSessionEvents = this.#lastTwoSessionEvents[1]?.[eventType];
+    if (event.type === EventType.DomContentLoaded) {
+      const insertIndex = previousSessionEvents.findIndex(
+        (arrayEvent) => 'timestamp' in arrayEvent && event.timestamp < arrayEvent.timestamp,
+      );
+      if (insertIndex > -1) {
+        previousSessionEvents.splice(insertIndex, 0, event);
+        return;
+      }
+    }
+    previousSessionEvents.push(event);
   }
 
   #addStorageEvent = (event: StorageEventData): void => {
-    const storageEvents = this.#lastTwoSessionEvents[1][RQSessionEventType.STORAGE];
-    if (!storageEvents[event.storageType]) {
-      storageEvents[event.storageType] = [];
-    }
-    storageEvents[event.storageType].push(event);
+    const previousStorageEvents = this.#lastTwoSessionEvents[1][RQSessionEventType.STORAGE];
+    previousStorageEvents[event.storageType].push(event);
   };
 
   #isCrossDomainFrame(): boolean {
@@ -274,10 +276,12 @@ export class SessionRecorder {
 
     Object.values(RQSessionEventType).forEach((eventType) => {
       if (eventType === RQSessionEventType.STORAGE) {
-        emptySessionEvents[RQSessionEventType.STORAGE][eventType] = {
-          [StorageType.LOCAL]: [],
-          [StorageType.SESSION]: [],
-        };
+        Object.values(StorageType).forEach((storageType) => {
+          emptySessionEvents[RQSessionEventType.STORAGE] = {
+            ...emptySessionEvents[RQSessionEventType.STORAGE],
+            [storageType]: [],
+          };
+        });
       } else {
         emptySessionEvents[eventType] = [];
       }
