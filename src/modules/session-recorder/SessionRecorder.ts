@@ -51,8 +51,8 @@ export class SessionRecorder {
       relayEventsToTop: options.relayEventsToTop && window.top !== window,
       ignoreMediaResponse: options.ignoreMediaResponse ?? true,
       maxPayloadSize: options.maxPayloadSize ?? 100 * 1024, // 100KB max payload size of any request/response
-      localStorage: options.localStorage ?? true,
-      sessionStorage: options.sessionStorage ?? false,
+      localStorage: options.localStorage,
+      sessionStorage: options.sessionStorage,
     };
     this.#url = window.location.href;
 
@@ -137,19 +137,19 @@ export class SessionRecorder {
       this.#addEvent(RQSessionEventType.NETWORK, event);
     });
 
-      if (this.#options.localStorage) {
-        Storage.startCapturingStorage(StorageType.LOCAL, this.#handleStorageEvent);
-      }
-      if (this.#options.sessionStorage) {
-        Storage.startCapturingStorage(StorageType.SESSION, this.#handleStorageEvent);
-      }
+    if (this.#options.localStorage) {
+      Storage.startCapturingStorage(StorageType.LOCAL, this.#handleStorageEvent);
+    }
+    if (this.#options.sessionStorage) {
+      Storage.startCapturingStorage(StorageType.SESSION, this.#handleStorageEvent);
+    }
   }
 
   stop(): void {
     this.#stopRecording?.();
     this.#stopRecording = null;
     Network.clearInterceptors();
-    Storage.stopCapturingStorage()
+    Storage.stopCapturingStorage();
   }
 
   getSession(): RQSession {
@@ -206,7 +206,7 @@ export class SessionRecorder {
   #addEvent(eventType: RQSessionEventType, event: RQSessionEvent): void {
     const previousSessionEvents = this.#lastTwoSessionEvents[1]?.[eventType];
     // DOMContentLoaded events sometimes come out of order
-    if (event && event.type === EventType.DomContentLoaded) {
+    if (event.type === EventType.DomContentLoaded) {
       const insertIndex = previousSessionEvents?.findIndex((arrayEvent) => event.timestamp < arrayEvent.timestamp);
       if (insertIndex > -1) {
         previousSessionEvents?.splice(insertIndex, 0, event);
