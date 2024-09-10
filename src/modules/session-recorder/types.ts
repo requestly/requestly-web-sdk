@@ -63,11 +63,10 @@ export type NetworkEventData = CommonEventData & {
   errors?: RQNetworkEventErrorCodes[];
 };
 
-
 export interface RQSessionEventDataType {
   [RQSessionEventType.RRWEB]: RRWebEventData;
   [RQSessionEventType.NETWORK]: NetworkEventData;
-  [RQSessionEventType.STORAGE]: StorageEventData; 
+  [RQSessionEventType.STORAGE]: StorageEventData;
 }
 
 export type RQSessionEvent = RQSessionEventDataType[RQSessionEventType];

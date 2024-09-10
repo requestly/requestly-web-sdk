@@ -1,7 +1,7 @@
 import { StorageEventData, StorageEventType, StorageType } from './types';
 
-export class Storage {
-  private static storageListeners: {
+class StorageClass {
+  private storageListeners: {
     [StorageType.LOCAL]: ((event: StorageEventData) => void) | null;
     [StorageType.SESSION]: ((event: StorageEventData) => void) | null;
   } = {
@@ -9,11 +9,7 @@ export class Storage {
     [StorageType.SESSION]: null,
   };
 
-  static initStorageCapture(
-    captureInitialDump: boolean = true,
-    localStorage: boolean = false,
-    sessionStorage: boolean = false,
-  ): void {
+  initStorageCapture(captureInitialDump = true, localStorage = false, sessionStorage = false): void {
     if (localStorage || sessionStorage) {
       if (captureInitialDump) {
         if (localStorage) this.captureInitialStorageDump(StorageType.LOCAL);
@@ -23,19 +19,19 @@ export class Storage {
     }
   }
 
-  static stopStorageCapture(): void {
+  stopStorageCapture(): void {
     window.removeEventListener('storage', this.captureStorageEvent);
   }
 
-  static addListener(listener: (event: StorageEventData) => void, storageType: StorageType): void {
+  addListener(listener: (event: StorageEventData) => void, storageType: StorageType): void {
     this.storageListeners[storageType] = listener;
   }
 
-  static removeListener(storageType: StorageType): void {
+  removeListener(storageType: StorageType): void {
     this.storageListeners[storageType] = null;
   }
 
-  private static captureInitialStorageDump(storageType: StorageType): void {
+  private captureInitialStorageDump(storageType: StorageType): void {
     const storage = storageType === StorageType.LOCAL ? localStorage : sessionStorage;
     Object.keys(storage).forEach((key) => {
       const value = storage.getItem(key);
@@ -50,7 +46,7 @@ export class Storage {
     });
   }
 
-  private static captureStorageEvent = (event: StorageEvent): void => {
+  private captureStorageEvent = (event: StorageEvent): void => {
     if (event.storageArea === localStorage || event.storageArea === sessionStorage) {
       const storageEvent: StorageEventData = {
         timestamp: Date.now(),
@@ -64,10 +60,12 @@ export class Storage {
     }
   };
 
-  private static notifyListeners(event: StorageEventData): void {
+  private notifyListeners(event: StorageEventData): void {
     const listener = this.storageListeners[event.storageType];
     if (listener) {
       listener(event);
     }
   }
 }
+
+export const Storage = new StorageClass();

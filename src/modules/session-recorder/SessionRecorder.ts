@@ -163,7 +163,6 @@ export class SessionRecorder {
     }
   }
 
-
   getSession(): RQSession {
     if (this.#options.relayEventsToTop) {
       return null;
@@ -348,4 +347,3 @@ export class SessionRecorder {
   //   }
   // };
 }
-

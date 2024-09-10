@@ -1,20 +1,20 @@
-import { CommonEventData } from "../session-recorder";
+import { CommonEventData } from '../session-recorder';
 
 export enum StorageType {
-    LOCAL = 'local',
-    SESSION = 'session',
-  }
+  LOCAL = 'local',
+  SESSION = 'session',
+}
 
 export enum StorageEventType {
   INITIAL_STORAGE_VALUE = 'initialStorageValue',
   KEY_UPDATE = 'keyUpdate',
 }
-  
-  export type StorageEventData = CommonEventData & {
-    timestamp: number;
-    key: string;
-    storageType: StorageType;
-  } & (
+
+export type StorageEventData = CommonEventData & {
+  timestamp: number;
+  key: string;
+  storageType: StorageType;
+} & (
     | {
         eventType: StorageEventType.INITIAL_STORAGE_VALUE;
         value: string | null;
@@ -25,4 +25,3 @@ export enum StorageEventType {
         newValue: string | null;
       }
   );
-
