@@ -162,7 +162,9 @@ export class SessionRecorder {
       if (eventType === RQSessionEventType.STORAGE) {
         events[eventType] = {
           local: this.#lastTwoSessionEvents[0][eventType].local.concat(this.#lastTwoSessionEvents[1][eventType].local),
-          session: this.#lastTwoSessionEvents[0][eventType].session.concat(this.#lastTwoSessionEvents[1][eventType].session)
+          session: this.#lastTwoSessionEvents[0][eventType].session.concat(
+            this.#lastTwoSessionEvents[1][eventType].session,
+          ),
         };
       } else {
         events[eventType] = this.#lastTwoSessionEvents[0][eventType].concat(this.#lastTwoSessionEvents[1][eventType]);
@@ -214,7 +216,9 @@ export class SessionRecorder {
     const previousSessionEvents = this.#lastTwoSessionEvents[1]?.[eventType];
     if (Array.isArray(previousSessionEvents)) {
       if ('type' in event && event.type === EventType.DomContentLoaded && 'timestamp' in event) {
-        const insertIndex = previousSessionEvents.findIndex((arrayEvent) => 'timestamp' in arrayEvent && event.timestamp < arrayEvent.timestamp);
+        const insertIndex = previousSessionEvents.findIndex(
+          (arrayEvent) => 'timestamp' in arrayEvent && event.timestamp < arrayEvent.timestamp,
+        );
         if (insertIndex > -1) {
           previousSessionEvents.splice(insertIndex, 0, event);
           return;
@@ -230,7 +234,7 @@ export class SessionRecorder {
       storageEvents[event.storageType] = [];
     }
     storageEvents[event.storageType].push(event);
-  }
+  };
 
   #isCrossDomainFrame(): boolean {
     try {
