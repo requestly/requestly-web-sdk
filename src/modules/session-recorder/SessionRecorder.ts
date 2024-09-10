@@ -219,16 +219,15 @@ export class SessionRecorder {
     }
 
     const previousSessionEvents = this.#lastTwoSessionEvents[1]?.[eventType];
+    // DOMContentLoaded events sometimes come out of order
     if (event.type === EventType.DomContentLoaded) {
-      const insertIndex = previousSessionEvents.findIndex(
-        (arrayEvent) => 'timestamp' in arrayEvent && event.timestamp < arrayEvent.timestamp,
-      );
+      const insertIndex = previousSessionEvents?.findIndex((arrayEvent) => event.timestamp < arrayEvent.timestamp);
       if (insertIndex > -1) {
-        previousSessionEvents.splice(insertIndex, 0, event);
+        previousSessionEvents?.splice(insertIndex, 0, event);
         return;
       }
     }
-    previousSessionEvents.push(event);
+    previousSessionEvents?.push(event);
   }
 
   #addStorageEvent = (event: StorageEventData): void => {
