@@ -51,8 +51,6 @@ export class SessionRecorder {
       relayEventsToTop: options.relayEventsToTop && window.top !== window,
       ignoreMediaResponse: options.ignoreMediaResponse ?? true,
       maxPayloadSize: options.maxPayloadSize ?? 100 * 1024, // 100KB max payload size of any request/response
-      localStorage: options.localStorage,
-      sessionStorage: options.sessionStorage,
     };
     this.#url = window.location.href;
 
