@@ -9,11 +9,10 @@ import {
   RQSessionEventType,
   RRWebEventData,
 } from './types';
-import { StorageEventData } from '../storage';
 import Bowser from 'bowser';
 import { Network } from '../network';
 import { getObjectSizeInBytes, isMediaRequest } from './utils';
-import { Storage, StorageType } from '../storage';
+import { Storage, StorageType, StorageEventData } from '../storage';
 
 const POST_MESSAGE_SOURCE = 'requestly:websdk:sessionRecorder';
 const RELAY_EVENT_MESSAGE_ACTION = 'relayEventToTopDocument';
