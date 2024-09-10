@@ -54,8 +54,6 @@ export class SessionRecorder {
     };
     this.#url = window.location.href;
 
-    this.#lastTwoSessionEvents = [this.#getEmptySessionEvents(), this.#getEmptySessionEvents()];
-
     if (!this.#options.relayEventsToTop) {
       this.#captureEnvironment();
 
