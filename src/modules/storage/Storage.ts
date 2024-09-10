@@ -11,21 +11,20 @@ class StorageClass {
     window.addEventListener('storage', this.captureStorageEvent);
   }
 
-  startCapturingStorage(storageType: StorageType, listener: (event: StorageEventData) => void): void {
+  startCapturingStorage(storageType: StorageType, listener: StorageListener): void {
     this.storageListeners[storageType] = listener;
     this.initStorageCapture(storageType);
   }
 
   stopCapturingStorage(): void {
+    window.removeEventListener('storage', this.captureStorageEvent);
     this.storageListeners = {
       [StorageType.LOCAL]: null,
       [StorageType.SESSION]: null,
     };
-    window.removeEventListener('storage', this.captureStorageEvent);
   }
 
   private captureInitialStorageDump(storageType: StorageType): void {
-    console.log('captureInitialStorageDump', storageType);
     const storage = storageType === StorageType.LOCAL ? localStorage : sessionStorage;
     Object.keys(storage).forEach((key) => {
       const value = storage.getItem(key);
@@ -36,7 +35,6 @@ class StorageClass {
         eventType: StorageEventType.INITIAL_STORAGE_VALUE,
         storageType,
       };
-      console.log('captureInitialStorageDump', storageEvent);
       this.notifyListeners(storageEvent);
     });
   }
