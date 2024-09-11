@@ -12,6 +12,7 @@ import {
 import Bowser from 'bowser';
 import { Network } from '../network';
 import { getObjectSizeInBytes, isMediaRequest } from './utils';
+import { Storage, StorageType, StorageEventData } from '../storage';
 
 const POST_MESSAGE_SOURCE = 'requestly:websdk:sessionRecorder';
 const RELAY_EVENT_MESSAGE_ACTION = 'relayEventToTopDocument';
@@ -31,6 +32,8 @@ export interface SessionRecorderOptions {
   previousSession?: RQSession;
   ignoreMediaResponse?: boolean;
   maxPayloadSize?: number; // in Bytes
+  localStorage?: boolean;
+  sessionStorage?: boolean;
 }
 
 export class SessionRecorder {
@@ -130,12 +133,20 @@ export class SessionRecorder {
     this.#interceptNetworkRequests((event) => {
       this.#addEvent(RQSessionEventType.NETWORK, event);
     });
+
+    if (this.#options.localStorage) {
+      Storage.startCapturingStorage(StorageType.LOCAL, this.#addStorageEvent);
+    }
+    if (this.#options.sessionStorage) {
+      Storage.startCapturingStorage(StorageType.SESSION, this.#addStorageEvent);
+    }
   }
 
   stop(): void {
     this.#stopRecording?.();
     this.#stopRecording = null;
     Network.clearInterceptors();
+    Storage.stopCapturingStorage();
   }
 
   getSession(): RQSession {
@@ -145,7 +156,18 @@ export class SessionRecorder {
 
     const events: RQSessionEvents = {};
     Object.values(RQSessionEventType).forEach((eventType) => {
-      events[eventType] = this.#lastTwoSessionEvents[0][eventType].concat(this.#lastTwoSessionEvents[1][eventType]);
+      if (eventType === RQSessionEventType.STORAGE) {
+        events[RQSessionEventType.STORAGE] = {
+          [StorageType.LOCAL]: this.#lastTwoSessionEvents[0][RQSessionEventType.STORAGE][StorageType.LOCAL].concat(
+            this.#lastTwoSessionEvents[1][RQSessionEventType.STORAGE][StorageType.LOCAL],
+          ),
+        };
+        events[RQSessionEventType.STORAGE][StorageType.SESSION] = this.#lastTwoSessionEvents[0][
+          RQSessionEventType.STORAGE
+        ][StorageType.SESSION].concat(this.#lastTwoSessionEvents[1][RQSessionEventType.STORAGE][StorageType.SESSION]);
+      } else {
+        events[eventType] = this.#lastTwoSessionEvents[0][eventType].concat(this.#lastTwoSessionEvents[1][eventType]);
+      }
     });
 
     const rrwebEvents = events[RQSessionEventType.RRWEB] as RRWebEventData[];
@@ -190,6 +212,11 @@ export class SessionRecorder {
   }
 
   #addEvent(eventType: RQSessionEventType, event: RQSessionEvent): void {
+    if (eventType === RQSessionEventType.STORAGE) {
+      this.#addStorageEvent(event as StorageEventData);
+      return;
+    }
+
     const previousSessionEvents = this.#lastTwoSessionEvents[1]?.[eventType];
     // DOMContentLoaded events sometimes come out of order
     if (event.type === EventType.DomContentLoaded) {
@@ -201,6 +228,11 @@ export class SessionRecorder {
     }
     previousSessionEvents?.push(event);
   }
+
+  #addStorageEvent = (event: StorageEventData): void => {
+    const previousStorageEvents = this.#lastTwoSessionEvents[1][RQSessionEventType.STORAGE];
+    previousStorageEvents[event.storageType].push(event);
+  };
 
   #isCrossDomainFrame(): boolean {
     try {
@@ -239,7 +271,16 @@ export class SessionRecorder {
     const emptySessionEvents: RQSessionEvents = {};
 
     Object.values(RQSessionEventType).forEach((eventType) => {
-      emptySessionEvents[eventType] = [];
+      if (eventType === RQSessionEventType.STORAGE) {
+        Object.values(StorageType).forEach((storageType) => {
+          emptySessionEvents[RQSessionEventType.STORAGE] = {
+            ...emptySessionEvents[RQSessionEventType.STORAGE],
+            [storageType]: [],
+          };
+        });
+      } else {
+        emptySessionEvents[eventType] = [];
+      }
     });
     return emptySessionEvents;
   }

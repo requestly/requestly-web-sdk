@@ -1,4 +1,5 @@
 import { eventWithTime, EventType } from '@rrweb/types';
+import { StorageEventData, StorageType } from '../storage';
 
 export interface Environment {
   userAgent: string;
@@ -38,6 +39,7 @@ export interface RQSessionAttributes {
 export enum RQSessionEventType {
   RRWEB = 'rrweb',
   NETWORK = 'network',
+  STORAGE = 'storage',
 }
 
 export type CommonEventData = {
@@ -64,12 +66,22 @@ export type NetworkEventData = CommonEventData & {
 export interface RQSessionEventDataType {
   [RQSessionEventType.RRWEB]: RRWebEventData;
   [RQSessionEventType.NETWORK]: NetworkEventData;
+  [RQSessionEventType.STORAGE]: {
+    [StorageType.LOCAL]: StorageEventData;
+    [StorageType.SESSION]: StorageEventData;
+  };
 }
 
-export type RQSessionEvent = RQSessionEventDataType[RQSessionEventType];
+export type RQSessionEvent =
+  | RQSessionEventDataType[Exclude<RQSessionEventType, RQSessionEventType.STORAGE>]
+  | StorageEventData;
 
 export type RQSessionEvents = {
-  [eventType in RQSessionEventType]?: RQSessionEvent[];
+  [eventType in Exclude<RQSessionEventType, RQSessionEventType.STORAGE>]?: RQSessionEvent[];
+} & {
+  [RQSessionEventType.STORAGE]?: {
+    [storageType in StorageType]?: RQSessionEvent[];
+  };
 };
 
 export interface RQSession {
