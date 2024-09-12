@@ -42,6 +42,7 @@ export class SessionRecorder {
   #url: string;
   #environment: Environment;
   #lastTwoSessionEvents: [RQSessionEvents, RQSessionEvents];
+  #checkoutIntervalID: NodeJS.Timeout;
 
   constructor(options: SessionRecorderOptions) {
     this.#options = {
@@ -110,17 +111,13 @@ export class SessionRecorder {
     this.#stopRecording = record({
       plugins,
       ...commonRrwebOptions,
-      checkoutEveryNms: this.#options.maxDuration,
       emit: (event, isCheckout) => {
         if (isCheckout) {
           const previousSessionEvents = this.#lastTwoSessionEvents[1];
-          const previousSessionRRWebEvents = previousSessionEvents[exports.RQSessionEventType.RRWEB];
+          const previousSessionRRWebEvents = previousSessionEvents[RQSessionEventType.RRWEB];
           if (previousSessionRRWebEvents.length > 1) {
-            const timeElapsedInBucket =
-              previousSessionRRWebEvents[previousSessionRRWebEvents.length - 1].timestamp -
-              previousSessionRRWebEvents[0].timestamp;
             // final session duration should be between T and 2T where T is maxDuration
-            if (timeElapsedInBucket >= this.#options.maxDuration) {
+            if (event.type === EventType.Meta) {
               this.#lastTwoSessionEvents = [previousSessionEvents, this.#getEmptySessionEvents()];
             }
           }
@@ -129,6 +126,10 @@ export class SessionRecorder {
         this.#addEvent(RQSessionEventType.RRWEB, event);
       },
     });
+
+    this.#checkoutIntervalID = setInterval(() => {
+      this.#takeSnapshot();
+    }, this.#options.maxDuration);
 
     this.#interceptNetworkRequests((event) => {
       this.#addEvent(RQSessionEventType.NETWORK, event);
@@ -142,9 +143,15 @@ export class SessionRecorder {
     }
   }
 
+  #takeSnapshot(): void {
+    record.takeFullSnapshot(true);
+  }
+
   stop(): void {
     this.#stopRecording?.();
     this.#stopRecording = null;
+    this.#checkoutIntervalID && clearInterval(this.#checkoutIntervalID);
+    this.#checkoutIntervalID = null;
     Network.clearInterceptors();
     Storage.stopCapturingStorage();
   }
