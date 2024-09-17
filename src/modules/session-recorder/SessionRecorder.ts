@@ -34,6 +34,7 @@ export interface SessionRecorderOptions {
   maxPayloadSize?: number; // in Bytes
   localStorage?: boolean;
   sessionStorage?: boolean;
+  captureHeaders?: boolean;
 }
 
 export class SessionRecorder {
@@ -192,21 +193,37 @@ export class SessionRecorder {
 
     Network.intercept(
       /.*/,
-      ({ method, url, requestData, responseJSON, responseURL, contentType, status, statusText, responseTime }) => {
-        captureEventFn(
-          this.#filterOutLargeNetworkValues({
-            timestamp: Date.now(),
-            method,
-            url,
-            requestData,
-            response: responseJSON,
-            responseURL,
-            contentType,
-            status,
-            statusText,
-            responseTime,
-          }),
-        );
+      ({
+        method,
+        url,
+        requestData,
+        responseJSON,
+        responseURL,
+        contentType,
+        status,
+        statusText,
+        responseTime,
+        requestHeaders,
+        responseHeaders,
+      }) => {
+        const eventData: NetworkEventData = {
+          timestamp: Date.now(),
+          method,
+          url,
+          requestData,
+          response: responseJSON,
+          responseURL,
+          contentType,
+          status,
+          statusText,
+          responseTime,
+        };
+        if (this.#options.captureHeaders) {
+          eventData.requestHeaders = requestHeaders;
+          eventData.responseHeaders = responseHeaders;
+        }
+
+        captureEventFn(this.#filterOutLargeNetworkValues(eventData));
       },
     );
   }
