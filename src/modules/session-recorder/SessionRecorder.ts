@@ -34,7 +34,7 @@ export interface SessionRecorderOptions {
   maxPayloadSize?: number; // in Bytes
   localStorage?: boolean;
   sessionStorage?: boolean;
-  enableHeadersCapture?: boolean;
+  captureHeaders?: boolean;
 }
 
 export class SessionRecorder {
@@ -218,7 +218,7 @@ export class SessionRecorder {
           statusText,
           responseTime,
         };
-        if (this.#options.enableHeadersCapture) {
+        if (this.#options.captureHeaders) {
           eventData.requestHeaders = requestHeaders;
           eventData.responseHeaders = responseHeaders;
         }
