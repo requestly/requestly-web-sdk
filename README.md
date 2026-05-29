@@ -1,5 +1,8 @@
 # Requestly Web SDK
 
+> **Part of [Requestly HTTP Interceptor](https://github.com/requestly/interceptor)** · See also: [Desktop](https://github.com/requestly/http-interceptor-desktop-app) · [API Client](https://github.com/requestly/requestly) · [Docs](https://docs.requestly.com)
+
+
 ## Installation
 
 ### Add to website as `<script>` tag
