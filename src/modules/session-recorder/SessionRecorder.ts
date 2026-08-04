@@ -34,6 +34,14 @@ export interface SessionRecorderOptions {
   maxPayloadSize?: number; // in Bytes
   localStorage?: boolean;
   sessionStorage?: boolean;
+  // Origin of the top document that relayed events are posted to. When set, the
+  // relay uses it as the postMessage targetOrigin instead of the wildcard '*',
+  // so cross-origin iframe events are not broadcast to untrusted frames.
+  trustedOrigin?: string;
+  // Shared secret distributed to every frame of a single recording. The receiver
+  // (top frame) accepts relayed events only when this token matches, which
+  // authenticates the sender without relying on message.origin.
+  relayToken?: string;
 }
 
 export class SessionRecorder {
@@ -61,8 +69,22 @@ export class SessionRecorder {
           return;
         }
 
+        // Authenticate the relayed message with the shared per-recording token.
+        // message.origin is NOT checked here: relayed events legitimately arrive
+        // from arbitrary cross-origin child frames, so message.origin is never the
+        // top origin and validating it would drop every real event. The origin
+        // restriction is applied on the send side via the postMessage targetOrigin.
+        if (this.#options.relayToken && message.data.token !== this.#options.relayToken) {
+          return;
+        }
+
         if (message.data.action === RELAY_EVENT_MESSAGE_ACTION) {
           const { eventType, event, url } = message.data.payload as RelayEventMessagePayload;
+          // Reject payloads whose eventType is not a known session event type before
+          // it is used to index into the session buffer.
+          if (!Object.values(RQSessionEventType).includes(eventType)) {
+            return;
+          }
           this.#addEvent(eventType, {
             ...event,
             frameUrl: url,
@@ -290,13 +312,16 @@ export class SessionRecorder {
       {
         source: POST_MESSAGE_SOURCE,
         action: RELAY_EVENT_MESSAGE_ACTION,
+        token: this.#options.relayToken,
         payload: {
           eventType,
           event,
           url: this.#url,
         } as RelayEventMessagePayload,
       },
-      '*',
+      // Restrict delivery to the known top origin when provided; fall back to the
+      // previous wildcard behaviour only when no trusted origin is configured.
+      this.#options.trustedOrigin ?? '*',
     );
   }
 
