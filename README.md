@@ -41,10 +41,17 @@ The repo's `.npmrc` sets `ignore-scripts=true`, so npm lifecycle scripts do not 
 - **Releasing:** `npm version` no longer runs the `version` (build) and `postversion` (push) scripts. Release with:
 
 ```sh
-# Each step runs only if the previous one succeeded, so a failed build never publishes.
+# Each step runs only if the previous one succeeded. The version is bumped first (the build embeds it),
+# but the release commit and tag are created only after the build succeeds.
 npm ci && \
-  npm version <patch|minor|major> && \
+  npm version <patch|minor|major> --no-git-tag-version && \
   npm run build && \
-  git push && git push --tags && \
+  VERSION=$(node -p "require('./package.json').version") && \
+  git commit -am "$VERSION" && \
+  git tag -a "v$VERSION" -m "$VERSION" && \
+  git push && git push origin "v$VERSION" && \
   npm publish
 ```
+
+If the build fails, nothing is committed or tagged; fix the build after discarding the bump with
+`git checkout package.json package-lock.json`, then run the release again.
