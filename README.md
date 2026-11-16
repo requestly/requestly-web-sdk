@@ -41,9 +41,10 @@ The repo's `.npmrc` sets `ignore-scripts=true`, so npm lifecycle scripts do not 
 - **Releasing:** `npm version` no longer runs the `version` (build) and `postversion` (push) scripts. Release with:
 
 ```sh
-npm ci
-npm version <patch|minor|major>
-npm run build
-git push && git push --tags
-npm publish
+# Each step runs only if the previous one succeeded, so a failed build never publishes.
+npm ci && \
+  npm version <patch|minor|major> && \
+  npm run build && \
+  git push && git push --tags && \
+  npm publish
 ```
