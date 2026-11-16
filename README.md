@@ -32,3 +32,18 @@ Check documentation for different modules exposed by SDK.
 
 - [SessionRecorder](documentation/SessionRecorder.md)
 - [Network](documentation/Network.md)
+
+## Development
+
+The repo's `.npmrc` sets `ignore-scripts=true`, so npm lifecycle scripts do not run automatically.
+
+- **Git hooks:** `npm ci` no longer installs the husky pre-commit hook. Run `npm run prepare` once after cloning.
+- **Releasing:** `npm version` no longer runs the `version` (build) and `postversion` (push) scripts. Release with:
+
+```sh
+npm ci
+npm version <patch|minor|major>
+npm run build
+git push && git push --tags
+npm publish
+```
